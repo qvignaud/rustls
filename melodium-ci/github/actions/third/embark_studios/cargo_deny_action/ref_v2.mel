@@ -1,0 +1,89 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(EmbarkStudios/cargo-deny-action@v2)]
+treatment cargoDenyAction[contexts: JavaScriptEngine, logger: Logger](
+        var args: Option<string> = _,
+        var arguments: string = "--all-features",
+        var command: string = "check",
+        var command_arguments: string = "",
+        var credentials: string = "",
+        var entrypoint: Option<string> = _,
+        var log_level: string = "warn",
+        var manifest_path: string = "./Cargo.toml",
+        var rust_version: string = "",
+        var ssh_key: string = "",
+        var ssh_known_hosts: string = "",
+        var use_git_cli: string = "false"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    buildImage: runAction[contexts = contexts, logger = logger](
+        commands = "docker build --tag cargo-deny-action:v2 --file Dockerfile ci/github/actions/third/EmbarkStudios/cargo-deny-action/",
+        name = "build:cargoDenyAction"
+    )
+    entrypoint: runAction[contexts = contexts, logger = logger](
+        commands = "docker run --volume \"$GITHUB_WORKSPACE:/github/workspace\" --mount type=bind,src=$GITHUB_OUTPUT,dst=/github/output.lst --env GITHUB_OUTPUT=/github/output.lst   cargo-deny-action:v2 '${{ inputs.rust-version }}' '${{ inputs.credentials }}' '${{ inputs.ssh-key }}' '${{ inputs.ssh-known-hosts }}' '${{ inputs.use-git-cli }}' '--log-level' '${{ inputs.log-level }}' '--manifest-path' '${{ inputs.manifest-path }}' '${{ inputs.arguments }}' '${{ inputs.command }}' '${{ inputs.command-arguments }}'",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_COMMAND",
+                    command
+                    ),
+                |entry(
+                    "INPUT_ARGUMENTS",
+                    arguments
+                    ),
+                |entry(
+                    "INPUT_COMMAND-ARGUMENTS",
+                    command_arguments
+                    ),
+                |entry(
+                    "INPUT_MANIFEST-PATH",
+                    manifest_path
+                    ),
+                |entry(
+                    "INPUT_LOG-LEVEL",
+                    log_level
+                    ),
+                |entry(
+                    "INPUT_RUST-VERSION",
+                    rust_version
+                    ),
+                |entry(
+                    "INPUT_CREDENTIALS",
+                    credentials
+                    ),
+                |entry(
+                    "INPUT_SSH-KEY",
+                    ssh_key
+                    ),
+                |entry(
+                    "INPUT_SSH-KNOWN-HOSTS",
+                    ssh_known_hosts
+                    ),
+                |entry(
+                    "INPUT_USE-GIT-CLI",
+                    use_git_cli
+                    )]
+            )
+        ),
+        name = "cargoDenyAction"
+    )
+
+    Self.trigger -> buildImage.trigger
+    buildImage.completed -> entrypoint.trigger
+    entrypoint.failed -> Self.failed
+    entrypoint.continue -> Self.continue
+    entrypoint.completed -> Self.completed
+}
+

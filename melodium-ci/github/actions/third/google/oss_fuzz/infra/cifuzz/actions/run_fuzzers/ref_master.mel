@@ -1,0 +1,104 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master)]
+treatment runFuzzers[contexts: JavaScriptEngine, logger: Logger](
+        var args: Option<string> = _,
+        var dry_run: string = "false",
+        var entrypoint: Option<string> = _,
+        var fuzz_seconds: string = "600",
+        var github_token: string = "",
+        var language: string = "c++",
+        var minimize_crashes: string = "False",
+        var mode: string = "code-change",
+        var oss_fuzz_project_name: string = "",
+        var output_sarif: string = "false",
+        var parallel_fuzzing: string = "false",
+        var report_ooms: string = "true",
+        var report_timeouts: string = "true",
+        var report_unreproducible_crashes: string = "False",
+        var sanitizer: string = "address"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    buildImage: runAction[contexts = contexts, logger = logger](
+        commands = "docker build --tag run_fuzzers:master --file run_fuzzers.Dockerfile ci/github/actions/third/google/oss-fuzz/infra/cifuzz/actions/run_fuzzers/../../..",
+        name = "build:runFuzzers"
+    )
+    entrypoint: runAction[contexts = contexts, logger = logger](
+        commands = "docker run --volume \"$GITHUB_WORKSPACE:/github/workspace\" --mount type=bind,src=$GITHUB_OUTPUT,dst=/github/output.lst --env GITHUB_OUTPUT=/github/output.lst  --env 'CFL_PLATFORM=github' --env 'OUTPUT_SARIF=${{ inputs.output-sarif }}' --env 'LANGUAGE=${{ inputs.language }}' --env 'CIFUZZ_DEBUG=True' --env 'LOW_DISK_SPACE=True' --env 'REPORT_TIMEOUTS=${{ inputs.report-timeouts }}' --env 'GITHUB_TOKEN=${{ inputs.github-token }}' --env 'SANITIZER=${{ inputs.sanitizer }}' --env 'MODE=${{ inputs.mode }}' --env 'REPORT_UNREPRODUCIBLE_CRASHES=${{ inputs.report-unreproducible-crashes }}' --env 'FUZZ_SECONDS=${{ inputs.fuzz-seconds }}' --env 'REPORT_OOMS=${{ inputs.report-ooms}}' --env 'OSS_FUZZ_PROJECT_NAME=${{ inputs.oss-fuzz-project-name }}' --env 'PARALLEL_FUZZING=${{ inputs.parallel-fuzzing }}' --env 'DRY_RUN=${{ inputs.dry-run}}' --env 'MINIMIZE_CRASHES=${{ inputs.minimize-crashes }}' run_fuzzers:master ",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_OSS-FUZZ-PROJECT-NAME",
+                    oss_fuzz_project_name
+                    ),
+                |entry(
+                    "INPUT_LANGUAGE",
+                    language
+                    ),
+                |entry(
+                    "INPUT_FUZZ-SECONDS",
+                    fuzz_seconds
+                    ),
+                |entry(
+                    "INPUT_DRY-RUN",
+                    dry_run
+                    ),
+                |entry(
+                    "INPUT_SANITIZER",
+                    sanitizer
+                    ),
+                |entry(
+                    "INPUT_MODE",
+                    mode
+                    ),
+                |entry(
+                    "INPUT_GITHUB-TOKEN",
+                    github_token
+                    ),
+                |entry(
+                    "INPUT_REPORT-UNREPRODUCIBLE-CRASHES",
+                    report_unreproducible_crashes
+                    ),
+                |entry(
+                    "INPUT_MINIMIZE-CRASHES",
+                    minimize_crashes
+                    ),
+                |entry(
+                    "INPUT_PARALLEL-FUZZING",
+                    parallel_fuzzing
+                    ),
+                |entry(
+                    "INPUT_OUTPUT-SARIF",
+                    output_sarif
+                    ),
+                |entry(
+                    "INPUT_REPORT-TIMEOUTS",
+                    report_timeouts
+                    ),
+                |entry(
+                    "INPUT_REPORT-OOMS",
+                    report_ooms
+                    )]
+            )
+        ),
+        name = "runFuzzers"
+    )
+
+    Self.trigger -> buildImage.trigger
+    buildImage.completed -> entrypoint.trigger
+    entrypoint.failed -> Self.failed
+    entrypoint.continue -> Self.continue
+    entrypoint.completed -> Self.completed
+}
+

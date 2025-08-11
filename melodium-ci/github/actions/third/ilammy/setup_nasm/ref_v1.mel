@@ -1,0 +1,47 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(ilammy/setup-nasm@v1)]
+treatment setupNasm[contexts: JavaScriptEngine, logger: Logger](
+        var from_source: string = "",
+        var platform: string = "",
+        var version: string = "2.16.01"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    mainAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/ilammy/setup_nasm/ref_v1/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_VERSION",
+                    version
+                    ),
+                |entry(
+                    "INPUT_FROM-SOURCE",
+                    from_source
+                    ),
+                |entry(
+                    "INPUT_PLATFORM",
+                    platform
+                    )]
+            )
+        ),
+        name = "setupNasm"
+    )
+
+    Self.trigger -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

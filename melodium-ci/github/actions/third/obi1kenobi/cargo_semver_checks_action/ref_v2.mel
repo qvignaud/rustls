@@ -1,0 +1,107 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(obi1kenobi/cargo-semver-checks-action@v2)]
+treatment cargoSemverChecksAction[contexts: JavaScriptEngine, logger: Logger](
+        var baseline_rev: string = "",
+        var baseline_root: string = "",
+        var baseline_version: string = "",
+        var exclude: string = "",
+        var feature_group: string = "",
+        var features: string = "",
+        var github_token: string = "${{ github.token }}",
+        var manifest_path: string = "",
+        var package: string = "",
+        var prefix_key: string = "",
+        var release_type: string = "",
+        var rust_target: string = "",
+        var rust_toolchain: string = "stable",
+        var shared_key: string = "",
+        var verbose: string = "false"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    mainAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/obi1kenobi/cargo_semver_checks_action/ref_v2/dist/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_PACKAGE",
+                    package
+                    ),
+                |entry(
+                    "INPUT_EXCLUDE",
+                    exclude
+                    ),
+                |entry(
+                    "INPUT_MANIFEST-PATH",
+                    manifest_path
+                    ),
+                |entry(
+                    "INPUT_FEATURE-GROUP",
+                    feature_group
+                    ),
+                |entry(
+                    "INPUT_FEATURES",
+                    features
+                    ),
+                |entry(
+                    "INPUT_VERBOSE",
+                    verbose
+                    ),
+                |entry(
+                    "INPUT_RELEASE-TYPE",
+                    release_type
+                    ),
+                |entry(
+                    "INPUT_RUST-TOOLCHAIN",
+                    rust_toolchain
+                    ),
+                |entry(
+                    "INPUT_RUST-TARGET",
+                    rust_target
+                    ),
+                |entry(
+                    "INPUT_SHARED-KEY",
+                    shared_key
+                    ),
+                |entry(
+                    "INPUT_PREFIX-KEY",
+                    prefix_key
+                    ),
+                |entry(
+                    "INPUT_GITHUB-TOKEN",
+                    github_token
+                    ),
+                |entry(
+                    "INPUT_BASELINE-VERSION",
+                    baseline_version
+                    ),
+                |entry(
+                    "INPUT_BASELINE-REV",
+                    baseline_rev
+                    ),
+                |entry(
+                    "INPUT_BASELINE-ROOT",
+                    baseline_root
+                    )]
+            )
+        ),
+        name = "cargoSemverChecksAction"
+    )
+
+    Self.trigger -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

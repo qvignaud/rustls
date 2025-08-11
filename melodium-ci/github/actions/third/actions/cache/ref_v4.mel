@@ -1,0 +1,81 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[github_action(actions/cache@v4)]
+#[generated(true)]
+treatment cache[contexts: JavaScriptEngine, logger: Logger](
+        var enable_cross_os_archive: string = "false",
+        var fail_on_cache_miss: string = "false",
+        var key: string = "",
+        var lookup_only: string = "false",
+        var path: string = "",
+        var restore_keys: string = "",
+        var save_always: string = "false",
+        var upload_chunk_size: string = ""
+)
+  input post_trigger: Block<void>
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  output post_completed: Block<void>
+{
+    mainAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/actions/cache/ref_v4/dist/restore/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_PATH",
+                    path
+                    ),
+                |entry(
+                    "INPUT_KEY",
+                    key
+                    ),
+                |entry(
+                    "INPUT_RESTORE-KEYS",
+                    restore_keys
+                    ),
+                |entry(
+                    "INPUT_UPLOAD-CHUNK-SIZE",
+                    upload_chunk_size
+                    ),
+                |entry(
+                    "INPUT_ENABLECROSSOSARCHIVE",
+                    enable_cross_os_archive
+                    ),
+                |entry(
+                    "INPUT_FAIL-ON-CACHE-MISS",
+                    fail_on_cache_miss
+                    ),
+                |entry(
+                    "INPUT_LOOKUP-ONLY",
+                    lookup_only
+                    ),
+                |entry(
+                    "INPUT_SAVE-ALWAYS",
+                    save_always
+                    )]
+            )
+        ),
+        name = "cache"
+    )
+    postAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/actions/cache/ref_v4/dist/save/index.js",
+        if = "success()",
+        name = "post:cache"
+    )
+
+    Self.post_trigger -> postAction.trigger
+    postAction.completed -> Self.post_completed
+    Self.trigger -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

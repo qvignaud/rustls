@@ -1,0 +1,148 @@
+use root/github/actions/third/actions/cache/ref_v4::cache
+use root/github/actions/third/actions/checkout/ref_v4::checkout
+use root/github/actions/third/actions/deploy_pages/ref_v4::deployPages
+use root/github/actions/third/actions/upload_pages_artifact/ref_v3::uploadPagesArtifact
+use root/github/actions/third/dtolnay/rust_toolchain/ref_nightly::rustToolchain
+use root/github/actions/third/lycheeverse/lychee_action/ref_v2::lycheeAction
+use root/github/actions/third/taiki_e/install_action/ref_v2::installAction
+use cicd/services/github::githubJobResult
+use cicd/services/github::prepareContexts
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use json/value::|null
+use json::Json
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+treatment deploy[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    deployment: deployPages[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "deploy",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> deployment.trigger
+    deployment.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+}
+
+#[generated(true)]
+treatment generate[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    cargoDoc: runAction[contexts = contexts, logger = logger](
+        commands = "cargo doc --locked --features aws-lc-rs,brotli,custom-provider,hashbrown,log,ring,std,zlib --no-deps --package rustls",
+        display_name = "cargo doc",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUSTDOCFLAGS",
+                    "-Dwarnings --cfg=docsrs --html-after-content tag.html"
+                    )]
+            )
+        ),
+        name = "cargoDoc"
+    )
+    checkLinks: lycheeAction[contexts = contexts, logger = logger](
+        args = ${--accept 200..=204,403,429,500 --cache --max-cache-age 1d --exclude-path 'website/content/' '**/*.md' 'target/doc/**/*.html'
+},
+        fail = "true"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    generateOtherPages: runAction[contexts = contexts, logger = logger](
+        commands = ${cd website && zola build --output-dir ../target/website/
+},
+        display_name = "Generate other pages",
+        name = "generateOtherPages"
+    )
+    generateVersionInformation: runAction[contexts = contexts, logger = logger](
+        commands = ${echo >tag.html \
+  "<script>var version = document.querySelector(\"span.version\");" \
+  "version.innerHTML += \"<br>(pre-release docs from <tt>$GITHUB_REF</tt>)\";" \
+  "version.title = \"commit $GITHUB_SHA\";" \
+  "</script>"
+},
+        display_name = "Generate version information",
+        name = "generateVersionInformation"
+    )
+    installRustToolchain: rustToolchain[contexts = contexts, logger = logger]()
+    installZola: installAction[contexts = contexts, logger = logger](
+        tool = "zola@0.19.1"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "generate",
+        outputs = |map(
+        []
+        )
+    )
+    massageRustdocOutput: runAction[contexts = contexts, logger = logger](
+        commands = ${# lockfile causes deployment step to go wrong, due to permissions
+rm -f target/doc/.lock
+# move the result into website root
+mv target/doc/* target/website/
+mv target/website/rustls target/website/docs
+},
+        display_name = "Massage rustdoc output",
+        name = "massageRustdocOutput"
+    )
+    packageAndUploadArtifact: uploadPagesArtifact[contexts = contexts, logger = logger](
+        path = "./target/website/"
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    restoreLycheeCache: cache[contexts = contexts, logger = logger](
+        key = "cache-lychee-${{ github.sha }}",
+        path = ".lycheecache",
+        restore_keys = "cache-lychee-"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> installZola.trigger
+    installZola.continue -> generateVersionInformation.trigger
+    generateVersionInformation.continue -> cargoDoc.trigger
+    cargoDoc.continue -> generateOtherPages.trigger
+    generateOtherPages.continue -> restoreLycheeCache.trigger
+    restoreLycheeCache.continue -> checkLinks.trigger
+    checkLinks.continue -> massageRustdocOutput.trigger
+    massageRustdocOutput.continue -> packageAndUploadArtifact.trigger
+    packageAndUploadArtifact.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+    jobResult.finished -> restoreLycheeCache.post_trigger
+}
+

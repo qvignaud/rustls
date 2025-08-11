@@ -1,0 +1,629 @@
+use root/github/actions/third/actions/github_script/ref_v7::githubScript
+use cicd/services/github::replicateContextsForComposite
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[github_action(codecov/codecov-action@v5)]
+#[generated(true)]
+treatment codecovAction[contexts: JavaScriptEngine, logger: Logger](
+        var base_sha: string = "",
+        var binary: string = "",
+        var codecov_yml_path: string = "",
+        var commit_parent: string = "",
+        var directory: string = "",
+        var disable_file_fixes: string = "false",
+        var disable_safe_directory: string = "false",
+        var disable_search: string = "false",
+        var disable_telem: string = "false",
+        var dry_run: string = "false",
+        var env_vars: string = "",
+        var exclude: string = "",
+        var fail_ci_if_error: string = "false",
+        var files: string = "",
+        var flags: string = "",
+        var force: string = "",
+        var gcov_args: string = "",
+        var gcov_executable: string = "gcov",
+        var gcov_ignore: string = "",
+        var gcov_include: string = "",
+        var git_service: string = "github",
+        var handle_no_reports_found: string = "false",
+        var job_code: string = "",
+        var name: string = "",
+        var network_filter: string = "",
+        var network_prefix: string = "",
+        var os: string = "",
+        var override_branch: string = "",
+        var override_build: string = "",
+        var override_build_url: string = "",
+        var override_commit: string = "",
+        var override_pr: string = "",
+        var plugins: string = "",
+        var recurse_submodules: string = "false",
+        var report_code: string = "",
+        var report_type: string = "",
+        var root_dir: string = "",
+        var run_command: string = "upload-coverage",
+        var skip_validation: string = "false",
+        var slug: string = "",
+        var swift_project: string = "",
+        var token: string = "",
+        var url: string = "",
+        var use_legacy_upload_endpoint: string = "false",
+        var use_oidc: string = "false",
+        var use_pypi: string = "false",
+        var verbose: string = "false",
+        var version: string = "latest",
+        var working_directory: string = ""
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  model composite_contexts: JavaScriptEngine()
+{
+    actionVersion: runAction[contexts = contexts, logger = logger](
+        commands = ${{CC_ACTION_VERSION=$(cat ${GITHUB_ACTION_PATH}/src/version)
+echo -e "\033[0;32m==>\033[0m Running Action version $CC_ACTION_VERSION"
+}},
+        display_name = "Action version",
+        name = "actionVersion",
+        shell = "bash"
+    )
+    getAndSetToken: runAction[contexts = contexts, logger = logger](
+        commands = ${{{if [ "${{ inputs.use_oidc }}" == 'true' ] && [ "$CC_FORK" != 'true' ];
+then
+  echo "CC_TOKEN=$CC_OIDC_TOKEN" >> "$GITHUB_ENV"
+elif [ -n "${{ env.CODECOV_TOKEN }}" ];
+then
+  echo -e "\033[0;32m==>\033[0m Token set from env"
+    echo "CC_TOKEN=${{ env.CODECOV_TOKEN }}" >> "$GITHUB_ENV"
+else
+  if [ -n "${{ inputs.token }}" ];
+  then
+    echo -e "\033[0;32m==>\033[0m Token set from input"
+    CC_TOKEN=$(echo "${{ inputs.token }}" | tr -d '\n')
+    echo "CC_TOKEN=$CC_TOKEN" >> "$GITHUB_ENV"
+  fi
+fi
+}}},
+        display_name = "Get and set token",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "CC_OIDC_AUDIENCE",
+                    "${{ inputs.url || 'https://codecov.io' }}"
+                    ),
+                |entry(
+                    "CC_OIDC_TOKEN",
+                    "${{ steps.oidc.outputs.result }}"
+                    )]
+            )
+        ),
+        name = "getAndSetToken",
+        shell = "bash"
+    )
+    oidc: githubScript[contexts = contexts, logger = logger](
+        script = ${{if (process.env.CC_USE_OIDC === 'true' && process.env.CC_FORK != 'true') {
+  const id_token = await core.getIDToken(process.env.CC_OIDC_AUDIENCE)
+  return id_token
+}
+}}
+    )
+    overrideBranchForForks: runAction[contexts = contexts, logger = logger](
+        commands = ${if [ -z "$CC_BRANCH" ] && [ -z "$CC_TOKEN" ] && [ "$CC_FORK" == 'true' ]
+then
+  echo -e "\033[0;32m==>\033[0m Fork detected, setting branch to $GITHUB_EVENT_PULL_REQUEST_HEAD_LABEL"
+  TOKENLESS="$GITHUB_EVENT_PULL_REQUEST_HEAD_LABEL"
+  CC_BRANCH="$GITHUB_EVENT_PULL_REQUEST_HEAD_LABEL"
+  echo "TOKENLESS=$TOKENLESS" >> "$GITHUB_ENV"
+fi
+
+echo "CC_BRANCH=$CC_BRANCH" >> "$GITHUB_ENV"
+},
+        display_name = "Override branch for forks",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "GITHUB_EVENT_PULL_REQUEST_HEAD_REPO_FULL_NAME",
+                    "${{ github.event.pull_request.head.repo.full_name }}"
+                    ),
+                |entry(
+                    "GITHUB_EVENT_PULL_REQUEST_HEAD_LABEL",
+                    "${{ github.event.pull_request.head.label }}"
+                    ),
+                |entry(
+                    "CC_BRANCH",
+                    "${{ inputs.override_branch }}"
+                    ),
+                |entry(
+                    "GITHUB_REPOSITORY",
+                    "${{ github.repository }}"
+                    )]
+            )
+        ),
+        name = "overrideBranchForForks",
+        shell = "bash"
+    )
+    overrideCommitsAndPrForPullRequests: runAction[contexts = contexts, logger = logger](
+        commands = ${{if [ -z "$CC_SHA" ];
+then
+  CC_SHA="$GITHUB_EVENT_PULL_REQUEST_HEAD_SHA"
+fi
+if [ -z "$CC_PR" ] && [ "${GITHUB_EVENT_NAME}" == "pull_request_target" ];
+then
+  CC_PR="$GITHUB_EVENT_NUMBER"
+fi
+
+echo "CC_SHA=$CC_SHA" >> "$GITHUB_ENV"
+echo "CC_PR=$CC_PR" >> "$GITHUB_ENV"
+}},
+        display_name = "Override commits and pr for pull requests",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "CC_PR",
+                    "${{ inputs.override_pr }}"
+                    ),
+                |entry(
+                    "GITHUB_EVENT_NUMBER",
+                    "${{ github.event.number }}"
+                    ),
+                |entry(
+                    "CC_SHA",
+                    "${{ inputs.override_commit }}"
+                    ),
+                |entry(
+                    "GITHUB_EVENT_NAME",
+                    "${{ github.event_name }}"
+                    ),
+                |entry(
+                    "GITHUB_EVENT_PULL_REQUEST_HEAD_SHA",
+                    "${{ github.event.pull_request.head.sha }}"
+                    )]
+            )
+        ),
+        name = "overrideCommitsAndPrForPullRequests",
+        shell = "bash"
+    )
+    replicateContextsForComposite[composite_contexts = composite_contexts, main_contexts = contexts](
+        inputs = |map(
+        [|entry(
+                "base_sha",
+                ""
+                ),
+            |entry(
+                "binary",
+                ""
+                ),
+            |entry(
+                "codecov_yml_path",
+                ""
+                ),
+            |entry(
+                "commit_parent",
+                ""
+                ),
+            |entry(
+                "directory",
+                ""
+                ),
+            |entry(
+                "disable_file_fixes",
+                ""
+                ),
+            |entry(
+                "disable_search",
+                ""
+                ),
+            |entry(
+                "disable_safe_directory",
+                ""
+                ),
+            |entry(
+                "disable_telem",
+                ""
+                ),
+            |entry(
+                "dry_run",
+                ""
+                ),
+            |entry(
+                "env_vars",
+                ""
+                ),
+            |entry(
+                "exclude",
+                ""
+                ),
+            |entry(
+                "fail_ci_if_error",
+                ""
+                ),
+            |entry(
+                "files",
+                ""
+                ),
+            |entry(
+                "flags",
+                ""
+                ),
+            |entry(
+                "force",
+                ""
+                ),
+            |entry(
+                "git_service",
+                ""
+                ),
+            |entry(
+                "gcov_args",
+                ""
+                ),
+            |entry(
+                "gcov_executable",
+                ""
+                ),
+            |entry(
+                "gcov_ignore",
+                ""
+                ),
+            |entry(
+                "gcov_include",
+                ""
+                ),
+            |entry(
+                "handle_no_reports_found",
+                ""
+                ),
+            |entry(
+                "job_code",
+                ""
+                ),
+            |entry(
+                "name",
+                ""
+                ),
+            |entry(
+                "network_filter",
+                ""
+                ),
+            |entry(
+                "network_prefix",
+                ""
+                ),
+            |entry(
+                "os",
+                ""
+                ),
+            |entry(
+                "override_branch",
+                ""
+                ),
+            |entry(
+                "override_build",
+                ""
+                ),
+            |entry(
+                "override_build_url",
+                ""
+                ),
+            |entry(
+                "override_commit",
+                ""
+                ),
+            |entry(
+                "override_pr",
+                ""
+                ),
+            |entry(
+                "plugins",
+                ""
+                ),
+            |entry(
+                "recurse_submodules",
+                ""
+                ),
+            |entry(
+                "report_code",
+                ""
+                ),
+            |entry(
+                "report_type",
+                ""
+                ),
+            |entry(
+                "root_dir",
+                ""
+                ),
+            |entry(
+                "run_command",
+                ""
+                ),
+            |entry(
+                "skip_validation",
+                ""
+                ),
+            |entry(
+                "slug",
+                ""
+                ),
+            |entry(
+                "swift_project",
+                ""
+                ),
+            |entry(
+                "token",
+                ""
+                ),
+            |entry(
+                "url",
+                ""
+                ),
+            |entry(
+                "use_legacy_upload_endpoint",
+                ""
+                ),
+            |entry(
+                "use_oidc",
+                ""
+                ),
+            |entry(
+                "use_pypi",
+                ""
+                ),
+            |entry(
+                "verbose",
+                ""
+                ),
+            |entry(
+                "version",
+                ""
+                ),
+            |entry(
+                "working-directory",
+                ""
+                )]
+        )
+    )
+    setFork: runAction[contexts = contexts, logger = logger](
+        commands = ${CC_FORK="false"
+if [ -n "$GITHUB_EVENT_PULL_REQUEST_HEAD_REPO_FULL_NAME" ] && [ "$GITHUB_EVENT_PULL_REQUEST_HEAD_REPO_FULL_NAME" != "$GITHUB_REPOSITORY" ];
+then
+  echo -e "\033[0;32m==>\033[0m Fork detected"
+  CC_FORK="true"
+fi
+echo "CC_FORK=$CC_FORK" >> "$GITHUB_ENV"
+},
+        display_name = "Set fork",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "GITHUB_EVENT_PULL_REQUEST_HEAD_LABEL",
+                    "${{ github.event.pull_request.head.label }}"
+                    ),
+                |entry(
+                    "GITHUB_EVENT_PULL_REQUEST_HEAD_REPO_FULL_NAME",
+                    "${{ github.event.pull_request.head.repo.full_name }}"
+                    ),
+                |entry(
+                    "GITHUB_REPOSITORY",
+                    "${{ github.repository }}"
+                    )]
+            )
+        ),
+        name = "setFork",
+        shell = "bash"
+    )
+    setSafeDirectory: runAction[contexts = contexts, logger = logger](
+        commands = ${{{git config --global --add safe.directory "${{ github.workspace }}"
+git config --global --add safe.directory "$GITHUB_WORKSPACE"
+}}},
+        display_name = "Set safe directory",
+        if = "${{ inputs.disable_safe_directory != 'true' }}",
+        name = "setSafeDirectory",
+        shell = "bash"
+    )
+    uploadCoverageToCodecov: runAction[contexts = contexts, logger = logger](
+        commands = "${GITHUB_ACTION_PATH}/dist/codecov.sh",
+        display_name = "Upload coverage to Codecov",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "CC_GCOV_ARGS",
+                    "${{ inputs.gcov_args }}"
+                    ),
+                |entry(
+                    "CC_ENTERPRISE_URL",
+                    "${{ inputs.url }}"
+                    ),
+                |entry(
+                    "CC_NAME",
+                    "${{ inputs.name }}"
+                    ),
+                |entry(
+                    "CC_LEGACY",
+                    "${{ inputs.use_legacy_upload_endpoint }}"
+                    ),
+                |entry(
+                    "CC_ENV",
+                    "${{ inputs.env_vars }}"
+                    ),
+                |entry(
+                    "CC_FORCE",
+                    "${{ inputs.force }}"
+                    ),
+                |entry(
+                    "CC_NETWORK_FILTER",
+                    "${{ inputs.network_filter }}"
+                    ),
+                |entry(
+                    "CC_PARENT_SHA",
+                    "${{ inputs.commit_parent }}"
+                    ),
+                |entry(
+                    "CC_RUN_CMD",
+                    "${{ inputs.run_command }}"
+                    ),
+                |entry(
+                    "CC_SERVICE",
+                    "${{ inputs.git_service }}"
+                    ),
+                |entry(
+                    "CC_BASE_SHA",
+                    "${{ inputs.base_sha }}"
+                    ),
+                |entry(
+                    "CC_DISABLE_FILE_FIXES",
+                    "${{ inputs.disable_file_fixes }}"
+                    ),
+                |entry(
+                    "CC_PLUGINS",
+                    "${{ inputs.plugins }}"
+                    ),
+                |entry(
+                    "CC_FLAGS",
+                    "${{ inputs.flags }}"
+                    ),
+                |entry(
+                    "CC_GIT_SERVICE",
+                    "${{ inputs.git_service }}"
+                    ),
+                |entry(
+                    "CC_BUILD_URL",
+                    "${{ inputs.override_build_url }}"
+                    ),
+                |entry(
+                    "CC_GCOV_IGNORE",
+                    "${{ inputs.gcov_ignore }}"
+                    ),
+                |entry(
+                    "CC_DRY_RUN",
+                    "${{ inputs.dry_run }}"
+                    ),
+                |entry(
+                    "CC_EXCLUDES",
+                    "${{ inputs.exclude }}"
+                    ),
+                |entry(
+                    "CC_OS",
+                    "${{ inputs.os }}"
+                    ),
+                |entry(
+                    "CC_GCOV_EXECUTABLE",
+                    "${{ inputs.gcov_executable }}"
+                    ),
+                |entry(
+                    "CC_HANDLE_NO_REPORTS_FOUND",
+                    "${{ inputs.handle_no_reports_found }}"
+                    ),
+                |entry(
+                    "CC_RECURSE_SUBMODULES",
+                    "${{ inputs.recurse_submodules }}"
+                    ),
+                |entry(
+                    "CC_REPORT_TYPE",
+                    "${{ inputs.report_type }}"
+                    ),
+                |entry(
+                    "CC_SKIP_VALIDATION",
+                    "${{ inputs.skip_validation }}"
+                    ),
+                |entry(
+                    "CC_YML_PATH",
+                    "${{ inputs.codecov_yml_path }}"
+                    ),
+                |entry(
+                    "CC_GCOV_INCLUDE",
+                    "${{ inputs.gcov_include }}"
+                    ),
+                |entry(
+                    "CC_DISABLE_SEARCH",
+                    "${{ inputs.disable_search }}"
+                    ),
+                |entry(
+                    "CC_USE_PYPI",
+                    "${{ inputs.use_pypi }}"
+                    ),
+                |entry(
+                    "CC_DIR",
+                    "${{ inputs.directory }}"
+                    ),
+                |entry(
+                    "CC_FILES",
+                    "${{ inputs.files }}"
+                    ),
+                |entry(
+                    "CC_VERBOSE",
+                    "${{ inputs.verbose }}"
+                    ),
+                |entry(
+                    "CC_NETWORK_PREFIX",
+                    "${{ inputs.network_prefix }}"
+                    ),
+                |entry(
+                    "CC_SLUG",
+                    "${{ inputs.slug }}"
+                    ),
+                |entry(
+                    "CC_BINARY",
+                    "${{ inputs.binary }}"
+                    ),
+                |entry(
+                    "CC_NETWORK_ROOT_FOLDER",
+                    "${{ inputs.root_dir }}"
+                    ),
+                |entry(
+                    "CC_VERSION",
+                    "${{ inputs.version }}"
+                    ),
+                |entry(
+                    "CC_DISABLE_TELEM",
+                    "${{ inputs.disable_telem }}"
+                    ),
+                |entry(
+                    "CC_JOB_CODE",
+                    "${{ inputs.job_code }}"
+                    ),
+                |entry(
+                    "CC_SWIFT_PROJECT",
+                    "${{ inputs.swift_project }}"
+                    ),
+                |entry(
+                    "CC_CODE",
+                    "${{ inputs.report_code }}"
+                    ),
+                |entry(
+                    "CC_FAIL_ON_ERROR",
+                    "${{ inputs.fail_ci_if_error }}"
+                    ),
+                |entry(
+                    "CC_BUILD",
+                    "${{ inputs.override_build }}"
+                    )]
+            )
+        ),
+        name = "uploadCoverageToCodecov",
+        shell = "bash",
+        working_directory = "${{ inputs.working-directory }}"
+    )
+
+    Self.trigger -> replicateContextsForComposite.trigger
+    replicateContextsForComposite.ready -> actionVersion.trigger
+    actionVersion.continue -> setSafeDirectory.trigger
+    setSafeDirectory.continue -> setFork.trigger
+    setFork.continue -> oidc.trigger
+    oidc.continue -> getAndSetToken.trigger
+    getAndSetToken.continue -> overrideBranchForForks.trigger
+    overrideBranchForForks.continue -> overrideCommitsAndPrForPullRequests.trigger
+    overrideCommitsAndPrForPullRequests.continue -> uploadCoverageToCodecov.trigger
+    uploadCoverageToCodecov.completed -> Self.completed
+    uploadCoverageToCodecov.failed -> Self.failed
+    uploadCoverageToCodecov.continue -> Self.continue
+}
+

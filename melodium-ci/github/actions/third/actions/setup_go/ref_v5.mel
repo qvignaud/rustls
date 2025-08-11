@@ -1,0 +1,76 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(actions/setup-go@v5)]
+treatment setupGo[contexts: JavaScriptEngine, logger: Logger](
+        var architecture: string = "",
+        var cache: string = "true",
+        var cache_dependency_path: string = "",
+        var check_latest: string = "false",
+        var go_version: string = "",
+        var go_version_file: string = "",
+        var token: string = "${{ github.server_url == 'https://github.com' && github.token || '' }}"
+)
+  input post_trigger: Block<void>
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  output post_completed: Block<void>
+{
+    mainAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/actions/setup_go/ref_v5/dist/setup/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_GO-VERSION",
+                    go_version
+                    ),
+                |entry(
+                    "INPUT_GO-VERSION-FILE",
+                    go_version_file
+                    ),
+                |entry(
+                    "INPUT_CHECK-LATEST",
+                    check_latest
+                    ),
+                |entry(
+                    "INPUT_TOKEN",
+                    token
+                    ),
+                |entry(
+                    "INPUT_CACHE",
+                    cache
+                    ),
+                |entry(
+                    "INPUT_CACHE-DEPENDENCY-PATH",
+                    cache_dependency_path
+                    ),
+                |entry(
+                    "INPUT_ARCHITECTURE",
+                    architecture
+                    )]
+            )
+        ),
+        name = "setupGo"
+    )
+    postAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/actions/setup_go/ref_v5/dist/cache-save/index.js",
+        if = "success()",
+        name = "post:setupGo"
+    )
+
+    Self.post_trigger -> postAction.trigger
+    postAction.completed -> Self.post_completed
+    Self.trigger -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

@@ -1,0 +1,1200 @@
+use root/github/actions/third/actions/cache/ref_v4::cache
+use root/github/actions/third/actions/checkout/ref_v4::checkout
+use root/github/actions/third/actions/setup_go/ref_v5::setupGo
+use root/github/actions/third/codecov/codecov_action/ref_v5::codecovAction
+use root/github/actions/third/dtolnay/rust_toolchain/ref_master::rustToolchain as RefMasterrustToolchain
+use root/github/actions/third/dtolnay/rust_toolchain/ref_nightly::rustToolchain as RefNightlyrustToolchain
+use root/github/actions/third/dtolnay/rust_toolchain/ref_stable::rustToolchain as RefStablerustToolchain
+use root/github/actions/third/embark_studios/cargo_deny_action/ref_v2::cargoDenyAction
+use root/github/actions/third/ilammy/setup_nasm/ref_v1::setupNasm
+use root/github/actions/third/obi1kenobi/cargo_semver_checks_action/ref_v2::cargoSemverChecksAction
+use root/github/actions/third/seanmiddleditch/gha_setup_ninja/ref_v6::ghaSetupNinja
+use root/github/actions/third/taiki_e/cache_cargo_install_action/ref_v2::cacheCargoInstallAction
+use root/github/actions/third/taiki_e/install_action/ref_cargo_hack::installAction as RefCargoHackinstallAction
+use root/github/actions/third/taiki_e/install_action/ref_cargo_minimal_versions::installAction as RefCargoMinimalVersionsinstallAction
+use cicd/services/github::githubJobResult
+use cicd/services/github::prepareContexts
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use json/value::|null
+use json::Json
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+treatment audit[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "audit",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    step0: checkout[contexts = contexts, logger = logger]()
+    step1: cargoDenyAction[contexts = contexts, logger = logger]()
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> step0.trigger
+    step0.continue -> step1.trigger
+    step1.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> step0.post_trigger
+}
+
+#[generated(true)]
+treatment benchmarks[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installNightlyToolchain: RefNightlyrustToolchain[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "benchmarks",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    runMicroBenchmarks: runAction[contexts = contexts, logger = logger](
+        commands = "cargo bench --locked --all-features",
+        display_name = "Run micro-benchmarks",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUSTFLAGS",
+                    "--cfg=bench"
+                    )]
+            )
+        ),
+        name = "runMicroBenchmarks"
+    )
+    smokeTestBenchmarkProgramAwsLcRs: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run -p rustls-bench --profile=bench --locked --features aws-lc-rs -- --multiplier 0.1",
+        display_name = "Smoke-test benchmark program (aws-lc-rs)",
+        name = "smokeTestBenchmarkProgramAwsLcRs"
+    )
+    smokeTestBenchmarkProgramFips: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run -p rustls-bench --profile=bench --locked --features fips -- --provider aws-lc-rs-fips --multiplier 0.1",
+        display_name = "Smoke-test benchmark program (fips)",
+        name = "smokeTestBenchmarkProgramFips"
+    )
+    smokeTestBenchmarkProgramRing: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run -p rustls-bench --profile=bench --locked --features ring -- --multiplier 0.1",
+        display_name = "Smoke-test benchmark program (ring)",
+        name = "smokeTestBenchmarkProgramRing"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installNightlyToolchain.trigger
+    installNightlyToolchain.continue -> smokeTestBenchmarkProgramRing.trigger
+    smokeTestBenchmarkProgramRing.continue -> smokeTestBenchmarkProgramAwsLcRs.trigger
+    smokeTestBenchmarkProgramAwsLcRs.continue -> smokeTestBenchmarkProgramFips.trigger
+    smokeTestBenchmarkProgramFips.continue -> runMicroBenchmarks.trigger
+    runMicroBenchmarks.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment bogo[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installGolangToolchain: setupGo[contexts = contexts, logger = logger](
+        cache = "false",
+        go_version = "1.24"
+    )
+    installStableToolchain: RefStablerustToolchain[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "bogo",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    runTestSuiteAwsLcRs: runAction[contexts = contexts, logger = logger](
+        commands = "./runme",
+        display_name = "Run test suite (aws-lc-rs)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "BOGO_SHIM_PROVIDER",
+                    "aws-lc-rs"
+                    )]
+            )
+        ),
+        name = "runTestSuiteAwsLcRs",
+        working_directory = "bogo"
+    )
+    runTestSuiteAwsLcRsFips: runAction[contexts = contexts, logger = logger](
+        commands = "./runme",
+        display_name = "Run test suite (aws-lc-rs-fips)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "BOGO_SHIM_PROVIDER",
+                    "aws-lc-rs-fips"
+                    )]
+            )
+        ),
+        name = "runTestSuiteAwsLcRsFips",
+        working_directory = "bogo"
+    )
+    runTestSuiteRing: runAction[contexts = contexts, logger = logger](
+        commands = "./runme",
+        display_name = "Run test suite (ring)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "BOGO_SHIM_PROVIDER",
+                    "ring"
+                    )]
+            )
+        ),
+        name = "runTestSuiteRing",
+        working_directory = "bogo"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installStableToolchain.trigger
+    installStableToolchain.continue -> installGolangToolchain.trigger
+    installGolangToolchain.continue -> runTestSuiteRing.trigger
+    runTestSuiteRing.continue -> runTestSuiteAwsLcRs.trigger
+    runTestSuiteAwsLcRs.continue -> runTestSuiteAwsLcRsFips.trigger
+    runTestSuiteAwsLcRsFips.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+    jobResult.finished -> installGolangToolchain.post_trigger
+}
+
+#[generated(true)]
+treatment build[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    cargoBuildDebugDefaultFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked",
+        display_name = "cargo build (debug; default features)",
+        name = "cargoBuildDebugDefaultFeatures"
+    )
+    cargoBuildDebugNoStd: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked --lib -p rustls $(admin/all-features-except std,brotli rustls)",
+        display_name = "cargo build (debug; no-std)",
+        name = "cargoBuildDebugNoStd"
+    )
+    cargoBuildDebugRustlsProviderExample: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked -p rustls-provider-example",
+        display_name = "cargo build (debug; rustls-provider-example)",
+        name = "cargoBuildDebugRustlsProviderExample"
+    )
+    cargoBuildDebugRustlsProviderExampleLibInNoStdMode: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked -p rustls-provider-example --no-default-features",
+        display_name = "cargo build (debug; rustls-provider-example lib in no-std mode)",
+        name = "cargoBuildDebugRustlsProviderExampleLibInNoStdMode"
+    )
+    cargoBuildDebugRustlsProviderTest: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked -p rustls-provider-test",
+        display_name = "cargo build (debug; rustls-provider-test)",
+        name = "cargoBuildDebugRustlsProviderTest"
+    )
+    cargoPackageAllFeaturesPRustls: runAction[contexts = contexts, logger = logger](
+        commands = "cargo package --all-features -p rustls",
+        display_name = "cargo package --all-features -p rustls",
+        name = "cargoPackageAllFeaturesPRustls"
+    )
+    cargoTestDebugAwsLcRs: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --no-default-features --features aws-lc-rs,log,std --all-targets",
+        display_name = "cargo test (debug; aws-lc-rs)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUST_BACKTRACE",
+                    "1"
+                    )]
+            )
+        ),
+        name = "cargoTestDebugAwsLcRs"
+    )
+    cargoTestDebugRustlsProviderExampleAllFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --all-features -p rustls-provider-example",
+        display_name = "cargo test (debug; rustls-provider-example; all features)",
+        name = "cargoTestDebugRustlsProviderExampleAllFeatures"
+    )
+    cargoTestDebugRustlsProviderTestAllFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --all-features -p rustls-provider-test",
+        display_name = "cargo test (debug; rustls-provider-test; all features)",
+        name = "cargoTestDebugRustlsProviderTestAllFeatures"
+    )
+    cargoTestDocReleaseAllFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --release --locked --all-features --doc",
+        display_name = "cargo test --doc (release; all-features)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUST_BACKTRACE",
+                    "1"
+                    )]
+            )
+        ),
+        name = "cargoTestDocReleaseAllFeatures"
+    )
+    cargoTestReleaseAllFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --release --locked --all-features --all-targets",
+        display_name = "cargo test (release; all features)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUST_BACKTRACE",
+                    "1"
+                    )]
+            )
+        ),
+        name = "cargoTestReleaseAllFeatures"
+    )
+    cargoTestReleaseFips: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --release --no-default-features --features fips,log,std --all-targets",
+        display_name = "cargo test (release; fips)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUST_BACKTRACE",
+                    "1"
+                    )]
+            )
+        ),
+        name = "cargoTestReleaseFips"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installGolangForAwsLcFipsSysOnMacos: setupGo[contexts = contexts, logger = logger](
+        go_version = "1.24.3"
+    )
+    installMatrixRustToolchain: RefMasterrustToolchain[contexts = contexts, logger = logger](
+        toolchain = "${{ matrix.rust }}"
+    )
+    installNasmForAwsLcRsOnWindows: setupNasm[contexts = contexts, logger = logger]()
+    installNinjaBuildToolForAwsLcFipsSysOnWindows: ghaSetupNinja[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "build",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installMatrixRustToolchain.trigger
+    installMatrixRustToolchain.continue -> installNasmForAwsLcRsOnWindows.trigger
+    installNasmForAwsLcRsOnWindows.continue -> installNinjaBuildToolForAwsLcFipsSysOnWindows.trigger
+    installNinjaBuildToolForAwsLcFipsSysOnWindows.continue -> installGolangForAwsLcFipsSysOnMacos.trigger
+    installGolangForAwsLcFipsSysOnMacos.continue -> cargoBuildDebugDefaultFeatures.trigger
+    cargoBuildDebugDefaultFeatures.continue -> cargoTestReleaseAllFeatures.trigger
+    cargoTestReleaseAllFeatures.continue -> cargoTestDocReleaseAllFeatures.trigger
+    cargoTestDocReleaseAllFeatures.continue -> cargoTestDebugAwsLcRs.trigger
+    cargoTestDebugAwsLcRs.continue -> cargoTestReleaseFips.trigger
+    cargoTestReleaseFips.continue -> cargoBuildDebugNoStd.trigger
+    cargoBuildDebugNoStd.continue -> cargoBuildDebugRustlsProviderExample.trigger
+    cargoBuildDebugRustlsProviderExample.continue -> cargoBuildDebugRustlsProviderExampleLibInNoStdMode.trigger
+    cargoBuildDebugRustlsProviderExampleLibInNoStdMode.continue -> cargoTestDebugRustlsProviderExampleAllFeatures.trigger
+    cargoTestDebugRustlsProviderExampleAllFeatures.continue -> cargoBuildDebugRustlsProviderTest.trigger
+    cargoBuildDebugRustlsProviderTest.continue -> cargoTestDebugRustlsProviderTestAllFeatures.trigger
+    cargoTestDebugRustlsProviderTestAllFeatures.continue -> cargoPackageAllFeaturesPRustls.trigger
+    cargoPackageAllFeaturesPRustls.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+    jobResult.finished -> installGolangForAwsLcFipsSysOnMacos.post_trigger
+}
+
+#[generated(true)]
+treatment checkExternalTypes[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installCargoCheckExternalTypes: cacheCargoInstallAction[contexts = contexts, logger = logger](
+        tool = "cargo-check-external-types"
+    )
+    installRustToolchain: RefMasterrustToolchain[contexts = contexts, logger = logger](
+        toolchain = "nightly-2025-05-04"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "checkExternalTypes",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    runCargoCheckExternalTypesForRustls: runAction[contexts = contexts, logger = logger](
+        commands = "cargo check-external-types",
+        display_name = "run cargo-check-external-types for rustls/",
+        name = "runCargoCheckExternalTypesForRustls",
+        working_directory = "rustls/"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> installCargoCheckExternalTypes.trigger
+    installCargoCheckExternalTypes.continue -> runCargoCheckExternalTypesForRustls.trigger
+    runCargoCheckExternalTypesForRustls.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment clippy[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installRustToolchain: RefStablerustToolchain[contexts = contexts, logger = logger](
+        components = "clippy"
+    )
+    installValgrind: runAction[contexts = contexts, logger = logger](
+        commands = "sudo apt-get update && sudo apt-get install -y valgrind",
+        display_name = "Install valgrind",
+        if = "runner.os == 'Linux'",
+        name = "installValgrind"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "clippy",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    step3: runAction[contexts = contexts, logger = logger](
+        commands = "./admin/clippy -- --deny warnings",
+        name = "step3"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installValgrind.trigger
+    installValgrind.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> step3.trigger
+    step3.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment clippyNightly[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installRustToolchain: RefNightlyrustToolchain[contexts = contexts, logger = logger](
+        components = "clippy"
+    )
+    installValgrind: runAction[contexts = contexts, logger = logger](
+        commands = "sudo apt-get update && sudo apt-get install -y valgrind",
+        display_name = "Install valgrind",
+        if = "runner.os == 'Linux'",
+        name = "installValgrind"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "clippyNightly",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    step3: runAction[contexts = contexts, logger = logger](
+        commands = "./admin/clippy",
+        name = "step3"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installValgrind.trigger
+    installValgrind.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> step3.trigger
+    step3.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment coverage[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installCargoLlvmCov: cacheCargoInstallAction[contexts = contexts, logger = logger](
+        tool = "cargo-llvm-cov"
+    )
+    installRustToolchain: RefNightlyrustToolchain[contexts = contexts, logger = logger](
+        components = "llvm-tools"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "coverage",
+        outputs = |map(
+        []
+        )
+    )
+    measureCoverage: runAction[contexts = contexts, logger = logger](
+        commands = "./admin/coverage --lcov --output-path final.info",
+        display_name = "Measure coverage",
+        name = "measureCoverage"
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    reportToCodecovIo: codecovAction[contexts = contexts, logger = logger](
+        fail_ci_if_error = "false",
+        files = "final.info",
+        token = "${{ secrets.CODECOV_TOKEN }}"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> installCargoLlvmCov.trigger
+    installCargoLlvmCov.continue -> measureCoverage.trigger
+    measureCoverage.continue -> reportToCodecovIo.trigger
+    reportToCodecovIo.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment cross[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    enableBindgenFeatureForAwsLcSysAsNeededForManyCrossTargets: runAction[contexts = contexts, logger = logger](
+        commands = "cargo add --dev --features bindgen 'aws-lc-sys@>0.20' --package rustls --verbose",
+        display_name = "Enable bindgen feature for aws-lc-sys (as needed for many cross targets)",
+        if = "${{ matrix.target != 'i686-unknown-linux-gnu' }}",
+        name = "enableBindgenFeatureForAwsLcSysAsNeededForManyCrossTargets"
+    )
+    installBindgenCli: cacheCargoInstallAction[contexts = contexts, logger = logger](
+        tool = "bindgen-cli"
+    )
+    installCross: cacheCargoInstallAction[contexts = contexts, logger = logger](
+        git = "https://github.com/cross-rs/cross",
+        rev = "c7dee4d",
+        tool = "cross"
+    )
+    installRustToolchain: RefStablerustToolchain[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "cross",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    step5: runAction[contexts = contexts, logger = logger](
+        commands = "cross test --package rustls --target ${{ matrix.target }}",
+        name = "step5"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> installCross.trigger
+    installCross.continue -> installBindgenCli.trigger
+    installBindgenCli.continue -> enableBindgenFeatureForAwsLcSysAsNeededForManyCrossTargets.trigger
+    enableBindgenFeatureForAwsLcSysAsNeededForManyCrossTargets.continue -> step5.trigger
+    step5.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment docs[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    cargoDocRustlsAllFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo doc --locked --all-features --no-deps --document-private-items --package rustls",
+        display_name = "cargo doc (rustls; all features)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUSTDOCFLAGS",
+                    "-Dwarnings"
+                    )]
+            )
+        ),
+        name = "cargoDocRustlsAllFeatures"
+    )
+    checkReadmeMd: runAction[contexts = contexts, logger = logger](
+        commands = ${cargo build --locked --all-features
+./admin/pull-readme
+git diff --exit-code
+},
+        display_name = "Check README.md",
+        name = "checkReadmeMd"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installRustToolchain: RefNightlyrustToolchain[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "docs",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> cargoDocRustlsAllFeatures.trigger
+    cargoDocRustlsAllFeatures.continue -> checkReadmeMd.trigger
+    checkReadmeMd.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment features[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    cargoBuildDebugDefaultFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked",
+        display_name = "cargo build (debug; default features)",
+        name = "cargoBuildDebugDefaultFeatures",
+        working_directory = "rustls"
+    )
+    cargoBuildDebugNoDefaultFeaturesNoStd: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked --no-default-features --target x86_64-unknown-none",
+        display_name = "cargo build (debug; no default features; no-std)",
+        name = "cargoBuildDebugNoDefaultFeaturesNoStd",
+        working_directory = "rustls"
+    )
+    cargoBuildDebugNoDefaultFeaturesNoStdHashbrown: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked --no-default-features --features hashbrown --target x86_64-unknown-none",
+        display_name = "cargo build (debug; no default features; no-std, hashbrown)",
+        name = "cargoBuildDebugNoDefaultFeaturesNoStdHashbrown",
+        working_directory = "rustls"
+    )
+    cargoTestDebugDefaultFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --locked",
+        display_name = "cargo test (debug; default features)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUST_BACKTRACE",
+                    "1"
+                    )]
+            )
+        ),
+        name = "cargoTestDebugDefaultFeatures",
+        working_directory = "rustls"
+    )
+    cargoTestDebugNoDefaultFeatures: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --locked --no-default-features",
+        display_name = "cargo test (debug; no default features)",
+        name = "cargoTestDebugNoDefaultFeatures",
+        working_directory = "rustls"
+    )
+    cargoTestDebugNoDefaultFeaturesStd: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --locked --no-default-features --features std",
+        display_name = "cargo test (debug; no default features; std)",
+        name = "cargoTestDebugNoDefaultFeaturesStd",
+        working_directory = "rustls"
+    )
+    cargoTestDebugNoDefaultFeaturesStdAwsLcRs: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --no-default-features --features aws-lc-rs,std",
+        display_name = "cargo test (debug; no default features; std+aws-lc-rs)",
+        name = "cargoTestDebugNoDefaultFeaturesStdAwsLcRs",
+        working_directory = "rustls"
+    )
+    cargoTestDebugNoDefaultFeaturesStdFips: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --no-default-features --features fips,std",
+        display_name = "cargo test (debug; no default features; std+fips)",
+        name = "cargoTestDebugNoDefaultFeaturesStdFips",
+        working_directory = "rustls"
+    )
+    cargoTestReleaseNoRun: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --locked --release --no-run",
+        display_name = "cargo test (release; no run)",
+        name = "cargoTestReleaseNoRun",
+        working_directory = "rustls"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installStableToolchain: RefStablerustToolchain[contexts = contexts, logger = logger](
+        target = "x86_64-unknown-none"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "features",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installStableToolchain.trigger
+    installStableToolchain.continue -> cargoBuildDebugDefaultFeatures.trigger
+    cargoBuildDebugDefaultFeatures.continue -> cargoBuildDebugNoDefaultFeaturesNoStd.trigger
+    cargoBuildDebugNoDefaultFeaturesNoStd.continue -> cargoBuildDebugNoDefaultFeaturesNoStdHashbrown.trigger
+    cargoBuildDebugNoDefaultFeaturesNoStdHashbrown.continue -> cargoTestDebugDefaultFeatures.trigger
+    cargoTestDebugDefaultFeatures.continue -> cargoTestDebugNoDefaultFeatures.trigger
+    cargoTestDebugNoDefaultFeatures.continue -> cargoTestDebugNoDefaultFeaturesStd.trigger
+    cargoTestDebugNoDefaultFeaturesStd.continue -> cargoTestDebugNoDefaultFeaturesStdAwsLcRs.trigger
+    cargoTestDebugNoDefaultFeaturesStdAwsLcRs.continue -> cargoTestDebugNoDefaultFeaturesStdFips.trigger
+    cargoTestDebugNoDefaultFeaturesStdFips.continue -> cargoTestReleaseNoRun.trigger
+    cargoTestReleaseNoRun.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment format[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkFormatting: runAction[contexts = contexts, logger = logger](
+        commands = "cargo fmt --all -- --check",
+        display_name = "Check formatting",
+        name = "checkFormatting"
+    )
+    checkFormattingConnectTestsWorkspace: runAction[contexts = contexts, logger = logger](
+        commands = "cargo fmt --all --manifest-path=connect-tests/Cargo.toml -- --check",
+        display_name = "Check formatting (connect-tests workspace)",
+        name = "checkFormattingConnectTestsWorkspace"
+    )
+    checkFormattingFuzzWorkspace: runAction[contexts = contexts, logger = logger](
+        commands = "cargo fmt --all --manifest-path=fuzz/Cargo.toml -- --check",
+        display_name = "Check formatting (fuzz workspace)",
+        name = "checkFormattingFuzzWorkspace"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installRustToolchain: RefStablerustToolchain[contexts = contexts, logger = logger](
+        components = "rustfmt"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "format",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> checkFormatting.trigger
+    checkFormatting.continue -> checkFormattingConnectTestsWorkspace.trigger
+    checkFormattingConnectTestsWorkspace.continue -> checkFormattingFuzzWorkspace.trigger
+    checkFormattingFuzzWorkspace.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment formatUnstable[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkFormattingUnstable: runAction[contexts = contexts, logger = logger](
+        commands = "cargo fmt --all -- --check --config-path .rustfmt.unstable.toml",
+        display_name = "Check formatting (unstable)",
+        name = "checkFormattingUnstable"
+    )
+    checkFormattingUnstableConnectTestsWorkspace: runAction[contexts = contexts, logger = logger](
+        commands = "cargo fmt --all --manifest-path=connect-tests/Cargo.toml -- --check --config-path .rustfmt.unstable.toml",
+        display_name = "Check formatting (unstable, connect-tests workspace)",
+        name = "checkFormattingUnstableConnectTestsWorkspace"
+    )
+    checkFormattingUnstableFuzzWorkspace: runAction[contexts = contexts, logger = logger](
+        commands = "cargo fmt --all --manifest-path=fuzz/Cargo.toml -- --check --config-path .rustfmt.unstable.toml",
+        display_name = "Check formatting (unstable, fuzz workspace)",
+        name = "checkFormattingUnstableFuzzWorkspace"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installRustNightlyToolchain: RefNightlyrustToolchain[contexts = contexts, logger = logger](
+        components = "rustfmt"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "formatUnstable",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    step5: runAction[contexts = contexts, logger = logger](
+        commands = "echo \"Nightly formatting check failed. Please run \\`cargo +nightly fmt-unstable\\`\"",
+        if = "${{ failure() }}",
+        name = "step5"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustNightlyToolchain.trigger
+    installRustNightlyToolchain.continue -> checkFormattingUnstable.trigger
+    checkFormattingUnstable.continue -> checkFormattingUnstableConnectTestsWorkspace.trigger
+    checkFormattingUnstableConnectTestsWorkspace.continue -> checkFormattingUnstableFuzzWorkspace.trigger
+    checkFormattingUnstableFuzzWorkspace.continue -> step5.trigger
+    step5.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment fuzz[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installCargoFuzz: cacheCargoInstallAction[contexts = contexts, logger = logger](
+        tool = "cargo-fuzz"
+    )
+    installNightlyToolchain: RefNightlyrustToolchain[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "fuzz",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    smokeTestFuzzTargets: runAction[contexts = contexts, logger = logger](
+        commands = ${cargo fuzz build
+for target in $(cargo fuzz list) ; do
+  cargo fuzz run $target -- -max_total_time=10
+done
+},
+        display_name = "Smoke-test fuzz targets",
+        name = "smokeTestFuzzTargets"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installNightlyToolchain.trigger
+    installNightlyToolchain.continue -> installCargoFuzz.trigger
+    installCargoFuzz.continue -> smokeTestFuzzTargets.trigger
+    smokeTestFuzzTargets.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment minver[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkDirectMinimalVersions: runAction[contexts = contexts, logger = logger](
+        commands = "cargo minimal-versions --direct --ignore-private check",
+        display_name = "Check direct-minimal-versions",
+        name = "checkDirectMinimalVersions",
+        working_directory = "rustls/"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installCargoHack: RefCargoHackinstallAction[contexts = contexts, logger = logger]()
+    installCargoMinimalVersions: RefCargoMinimalVersionsinstallAction[contexts = contexts, logger = logger]()
+    installRustToolchain: RefNightlyrustToolchain[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "minver",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> installCargoMinimalVersions.trigger
+    installCargoMinimalVersions.continue -> installCargoHack.trigger
+    installCargoHack.continue -> checkDirectMinimalVersions.trigger
+    checkDirectMinimalVersions.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment msrv[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "msrv",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    step1: RefMasterrustToolchain[contexts = contexts, logger = logger](
+        toolchain = "1.79"
+    )
+    step2: runAction[contexts = contexts, logger = logger](
+        commands = "cargo check --locked --lib --all-features -p rustls",
+        name = "step2"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> step1.trigger
+    step1.continue -> step2.trigger
+    step2.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment opensslTests[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    cacheOpenssl: cache[contexts = contexts, logger = logger](
+        key = "${{ env.VERSION }}",
+        path = "${{ env.VERSION }}"
+    )
+    cargoTestInOpensslTests: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --locked -- --include-ignored",
+        display_name = "cargo test (in openssl-tests/)",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUST_BACKTRACE",
+                    "1"
+                    )]
+            )
+        ),
+        name = "cargoTestInOpensslTests",
+        working_directory = "openssl-tests/"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    fetchAndBuildEnvVersion: runAction[contexts = contexts, logger = logger](
+        commands = ${wget https://github.com/openssl/openssl/releases/download/$VERSION/$VERSION.tar.gz
+tar -xzf $VERSION.tar.gz
+cd $VERSION/
+./Configure --prefix=$(pwd)/built/ --libdir=lib
+make -j$(nproc)
+make install
+},
+        display_name = "Fetch and build ${{ env.VERSION }}",
+        if = "steps.cache-openssl.outputs.cache-hit != 'true'",
+        name = "fetchAndBuildEnvVersion"
+    )
+    installStableToolchain: RefStablerustToolchain[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "opensslTests",
+        outputs = |map(
+        []
+        )
+    )
+    opensslVersion: runAction[contexts = contexts, logger = logger](
+        commands = "openssl version",
+        display_name = "openssl version",
+        name = "opensslVersion"
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    useEnvVersion: runAction[contexts = contexts, logger = logger](
+        commands = ${path=$(pwd)/$VERSION/built/
+echo "$path/bin" >> $GITHUB_PATH
+echo "LD_LIBRARY_PATH=$path/lib" >> $GITHUB_ENV
+},
+        display_name = "Use ${{ env.VERSION }}",
+        name = "useEnvVersion"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installStableToolchain.trigger
+    installStableToolchain.continue -> cacheOpenssl.trigger
+    cacheOpenssl.continue -> fetchAndBuildEnvVersion.trigger
+    fetchAndBuildEnvVersion.continue -> useEnvVersion.trigger
+    useEnvVersion.continue -> opensslVersion.trigger
+    opensslVersion.continue -> cargoTestInOpensslTests.trigger
+    cargoTestInOpensslTests.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+    jobResult.finished -> cacheOpenssl.post_trigger
+}
+
+#[generated(true)]
+treatment semver[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkSemver: cargoSemverChecksAction[contexts = contexts, logger = logger]()
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "semver",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> checkSemver.trigger
+    checkSemver.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment taplo[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installRustToolchain: RefStablerustToolchain[contexts = contexts, logger = logger]()
+    installTaploCli: cacheCargoInstallAction[contexts = contexts, logger = logger](
+        tool = "taplo-cli"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "taplo",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    step3: runAction[contexts = contexts, logger = logger](
+        commands = "taplo format --check",
+        name = "step3"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installRustToolchain.trigger
+    installRustToolchain.continue -> installTaploCli.trigger
+    installTaploCli.continue -> step3.trigger
+    step3.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+

@@ -1,0 +1,67 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(actions/upload-artifact@v4)]
+treatment uploadArtifact[contexts: JavaScriptEngine, logger: Logger](
+        var compression_level: string = "6",
+        var if_no_files_found: string = "warn",
+        var include_hidden_files: string = "false",
+        var name: string = "artifact",
+        var overwrite: string = "false",
+        var path: string = "",
+        var retention_days: string = ""
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    mainAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/actions/upload_artifact/ref_v4/dist/upload/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_NAME",
+                    name
+                    ),
+                |entry(
+                    "INPUT_PATH",
+                    path
+                    ),
+                |entry(
+                    "INPUT_IF-NO-FILES-FOUND",
+                    if_no_files_found
+                    ),
+                |entry(
+                    "INPUT_RETENTION-DAYS",
+                    retention_days
+                    ),
+                |entry(
+                    "INPUT_COMPRESSION-LEVEL",
+                    compression_level
+                    ),
+                |entry(
+                    "INPUT_OVERWRITE",
+                    overwrite
+                    ),
+                |entry(
+                    "INPUT_INCLUDE-HIDDEN-FILES",
+                    include_hidden_files
+                    )]
+            )
+        ),
+        name = "uploadArtifact"
+    )
+
+    Self.trigger -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

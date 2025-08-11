@@ -1,0 +1,129 @@
+use root/github/actions/third/actions/upload_artifact/ref_v4::uploadArtifact
+use cicd/services/github::replicateContextsForComposite
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(actions/upload-pages-artifact@v3)]
+treatment uploadPagesArtifact[contexts: JavaScriptEngine, logger: Logger](
+        var name: string = "github-pages",
+        var path: string = "_site/",
+        var retention_days: string = "1"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  model composite_contexts: JavaScriptEngine()
+{
+    archiveArtifact: runAction[contexts = contexts, logger = logger](
+        commands = ${echo ::group::Archive artifact
+tar \
+  --dereference --hard-dereference \
+  --directory "$INPUT_PATH" \
+  -cvf "$RUNNER_TEMP/artifact.tar" \
+  --exclude=.git \
+  --exclude=.github \
+  .
+echo ::endgroup::
+},
+        display_name = "Archive artifact",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_PATH",
+                    "${{ inputs.path }}"
+                    )]
+            )
+        ),
+        if = "runner.os == 'Linux'",
+        name = "archiveArtifact",
+        shell = "sh"
+    )
+    archiveArtifact_1: runAction[contexts = contexts, logger = logger](
+        commands = ${echo ::group::Archive artifact
+gtar \
+  --dereference --hard-dereference \
+  --directory "$INPUT_PATH" \
+  -cvf "$RUNNER_TEMP/artifact.tar" \
+  --exclude=.git \
+  --exclude=.github \
+  .
+echo ::endgroup::
+},
+        display_name = "Archive artifact",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_PATH",
+                    "${{ inputs.path }}"
+                    )]
+            )
+        ),
+        if = "runner.os == 'macOS'",
+        name = "archiveArtifact_1",
+        shell = "sh"
+    )
+    archiveArtifact_2: runAction[contexts = contexts, logger = logger](
+        commands = ${echo ::group::Archive artifact
+tar \
+  --dereference --hard-dereference \
+  --directory "$INPUT_PATH" \
+  -cvf "$RUNNER_TEMP\artifact.tar" \
+  --exclude=.git \
+  --exclude=.github \
+  --force-local \
+  "."
+echo ::endgroup::
+},
+        display_name = "Archive artifact",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_PATH",
+                    "${{ inputs.path }}"
+                    )]
+            )
+        ),
+        if = "runner.os == 'Windows'",
+        name = "archiveArtifact_2",
+        shell = "bash"
+    )
+    replicateContextsForComposite[composite_contexts = composite_contexts, main_contexts = contexts](
+        inputs = |map(
+        [|entry(
+                "name",
+                ""
+                ),
+            |entry(
+                "path",
+                ""
+                ),
+            |entry(
+                "retention-days",
+                ""
+                )]
+        )
+    )
+    uploadArtifact[contexts = contexts, logger = logger](
+        if_no_files_found = "error",
+        name = "${{ inputs.name }}",
+        path = "${{ runner.temp }}/artifact.tar",
+        retention_days = "${{ inputs.retention-days }}"
+    )
+
+    Self.trigger -> replicateContextsForComposite.trigger
+    replicateContextsForComposite.ready -> archiveArtifact.trigger
+    archiveArtifact.continue -> archiveArtifact_1.trigger
+    archiveArtifact_1.continue -> archiveArtifact_2.trigger
+    archiveArtifact_2.continue -> uploadArtifact.trigger
+    uploadArtifact.completed -> Self.completed
+    uploadArtifact.failed -> Self.failed
+    uploadArtifact.continue -> Self.continue
+}
+

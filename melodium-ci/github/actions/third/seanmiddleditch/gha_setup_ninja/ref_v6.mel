@@ -1,0 +1,52 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[github_action(seanmiddleditch/gha-setup-ninja@v6)]
+#[generated(true)]
+treatment ghaSetupNinja[contexts: JavaScriptEngine, logger: Logger](
+        var destination: string = "ninja-build",
+        var http_proxy: string = "",
+        var platform: string = "",
+        var version: string = "1.12.1"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    mainAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/seanmiddleditch/gha_setup_ninja/ref_v6/dist/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_VERSION",
+                    version
+                    ),
+                |entry(
+                    "INPUT_PLATFORM",
+                    platform
+                    ),
+                |entry(
+                    "INPUT_DESTINATION",
+                    destination
+                    ),
+                |entry(
+                    "INPUT_HTTP_PROXY",
+                    http_proxy
+                    )]
+            )
+        ),
+        name = "ghaSetupNinja"
+    )
+
+    Self.trigger -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

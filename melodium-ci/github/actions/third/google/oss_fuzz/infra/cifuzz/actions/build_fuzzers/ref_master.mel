@@ -1,0 +1,89 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master)]
+treatment buildFuzzers[contexts: JavaScriptEngine, logger: Logger](
+        var allowed_broken_targets_percentage: string = "",
+        var architecture: string = "x86_64",
+        var args: Option<string> = _,
+        var bad_build_check: string = "true",
+        var dry_run: string = "false",
+        var entrypoint: Option<string> = _,
+        var keep_unaffected_fuzz_targets: string = "false",
+        var language: string = "c++",
+        var oss_fuzz_project_name: string = "",
+        var output_sarif: string = "false",
+        var project_src_path: string = "",
+        var sanitizer: string = "address"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    buildImage: runAction[contexts = contexts, logger = logger](
+        commands = "docker build --tag build_fuzzers:master --file build_fuzzers.Dockerfile ci/github/actions/third/google/oss-fuzz/infra/cifuzz/actions/build_fuzzers/../../..",
+        name = "build:buildFuzzers"
+    )
+    entrypoint: runAction[contexts = contexts, logger = logger](
+        commands = "docker run --volume \"$GITHUB_WORKSPACE:/github/workspace\" --mount type=bind,src=$GITHUB_OUTPUT,dst=/github/output.lst --env GITHUB_OUTPUT=/github/output.lst  --env 'BAD_BUILD_CHECK=${{ inputs.bad-build-check }}' --env 'ALLOWED_BROKEN_TARGETS_PERCENTAGE=${{ inputs.allowed-broken-targets-percentage}}' --env 'LOW_DISK_SPACE=True' --env 'SANITIZER=${{ inputs.sanitizer }}' --env 'ARCHITECTURE=${{ inputs.architecture }}' --env 'DRY_RUN=${{ inputs.dry-run}}' --env 'CIFUZZ_DEBUG=True' --env 'CFL_PLATFORM=github' --env 'KEEP_UNAFFECTED_FUZZ_TARGETS=${{ inputs.keep-unaffected-fuzz-targets }}' --env 'OUTPUT_SARIF=${{ inputs.output-sarif }}' --env 'LANGUAGE=${{ inputs.language }}' --env 'PROJECT_SRC_PATH=${{ inputs.project-src-path }}' --env 'OSS_FUZZ_PROJECT_NAME=${{ inputs.oss-fuzz-project-name }}' build_fuzzers:master ",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_OSS-FUZZ-PROJECT-NAME",
+                    oss_fuzz_project_name
+                    ),
+                |entry(
+                    "INPUT_LANGUAGE",
+                    language
+                    ),
+                |entry(
+                    "INPUT_DRY-RUN",
+                    dry_run
+                    ),
+                |entry(
+                    "INPUT_ALLOWED-BROKEN-TARGETS-PERCENTAGE",
+                    allowed_broken_targets_percentage
+                    ),
+                |entry(
+                    "INPUT_SANITIZER",
+                    sanitizer
+                    ),
+                |entry(
+                    "INPUT_ARCHITECTURE",
+                    architecture
+                    ),
+                |entry(
+                    "INPUT_PROJECT-SRC-PATH",
+                    project_src_path
+                    ),
+                |entry(
+                    "INPUT_BAD-BUILD-CHECK",
+                    bad_build_check
+                    ),
+                |entry(
+                    "INPUT_KEEP-UNAFFECTED-FUZZ-TARGETS",
+                    keep_unaffected_fuzz_targets
+                    ),
+                |entry(
+                    "INPUT_OUTPUT-SARIF",
+                    output_sarif
+                    )]
+            )
+        ),
+        name = "buildFuzzers"
+    )
+
+    Self.trigger -> buildImage.trigger
+    buildImage.completed -> entrypoint.trigger
+    entrypoint.failed -> Self.failed
+    entrypoint.continue -> Self.continue
+    entrypoint.completed -> Self.completed
+}
+

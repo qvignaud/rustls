@@ -1,0 +1,62 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[github_action(actions/deploy-pages@v4)]
+#[generated(true)]
+treatment deployPages[contexts: JavaScriptEngine, logger: Logger](
+        var artifact_name: string = "github-pages",
+        var error_count: string = "10",
+        var preview: string = "false",
+        var reporting_interval: string = "5000",
+        var timeout: string = "600000",
+        var token: string = "${{ github.token }}"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    mainAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/actions/deploy_pages/ref_v4/dist/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_TOKEN",
+                    token
+                    ),
+                |entry(
+                    "INPUT_TIMEOUT",
+                    timeout
+                    ),
+                |entry(
+                    "INPUT_ERROR_COUNT",
+                    error_count
+                    ),
+                |entry(
+                    "INPUT_REPORTING_INTERVAL",
+                    reporting_interval
+                    ),
+                |entry(
+                    "INPUT_ARTIFACT_NAME",
+                    artifact_name
+                    ),
+                |entry(
+                    "INPUT_PREVIEW",
+                    preview
+                    )]
+            )
+        ),
+        name = "deployPages"
+    )
+
+    Self.trigger -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

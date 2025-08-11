@@ -1,0 +1,256 @@
+use root/github/actions/third/actions/checkout/ref_v4::checkout
+use root/github/actions/third/dtolnay/rust_toolchain/ref_master::rustToolchain as RefMasterrustToolchain
+use root/github/actions/third/dtolnay/rust_toolchain/ref_stable::rustToolchain as RefStablerustToolchain
+use root/github/actions/third/ilammy/setup_nasm/ref_v1::setupNasm
+use root/github/actions/third/seanmiddleditch/gha_setup_ninja/ref_v6::ghaSetupNinja
+use root/github/actions/third/taiki_e/install_action/ref_cargo_hack::installAction
+use cicd/services/github::githubJobResult
+use cicd/services/github::prepareContexts
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use json/value::|null
+use json::Json
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+treatment connectTests[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    buildExamplePrograms: runAction[contexts = contexts, logger = logger](
+        commands = "cargo build --locked -p rustls-examples",
+        display_name = "Build example programs",
+        name = "buildExamplePrograms"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installMatrixRustToolchain: RefMasterrustToolchain[contexts = contexts, logger = logger](
+        toolchain = "${{ matrix.rust }}"
+    )
+    installNasmForAwsLcRsOnWindows: setupNasm[contexts = contexts, logger = logger]()
+    installNinjaBuildToolForAwsLcFipsSysOnWindows: ghaSetupNinja[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "connectTests",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    runConnectTests: runAction[contexts = contexts, logger = logger](
+        commands = "cargo test --locked -p rustls-connect-tests --manifest-path=connect-tests/Cargo.toml",
+        display_name = "Run connect tests",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUST_BACKTRACE",
+                    "1"
+                    )]
+            )
+        ),
+        name = "runConnectTests"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installMatrixRustToolchain.trigger
+    installMatrixRustToolchain.continue -> installNasmForAwsLcRsOnWindows.trigger
+    installNasmForAwsLcRsOnWindows.continue -> installNinjaBuildToolForAwsLcFipsSysOnWindows.trigger
+    installNinjaBuildToolForAwsLcFipsSysOnWindows.continue -> buildExamplePrograms.trigger
+    buildExamplePrograms.continue -> runConnectTests.trigger
+    runConnectTests.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment exampleTests[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkEchClientDefoIe: runAction[contexts = contexts, logger = logger](
+        commands = ${cargo run --locked -p rustls-examples --bin ech-client -- --host min-ng.test.defo.ie --path "echstat.php?format=json" public.test.defo.ie min-ng.test.defo.ie |
+  grep '"SSL_ECH_STATUS": "success"'
+},
+        display_name = "Check ech-client (defo.ie)",
+        name = "checkEchClientDefoIe"
+    )
+    checkEchClientResearchCloudflareCom: runAction[contexts = contexts, logger = logger](
+        commands = ${cargo run --locked -p rustls-examples --bin ech-client -- cloudflare-ech.com research.cloudflare.com --path /cdn-cgi/trace |
+  grep 'sni=encrypted'
+},
+        display_name = "Check ech-client (research.cloudflare.com)",
+        name = "checkEchClientResearchCloudflareCom"
+    )
+    checkEchClientTlsEchDev: runAction[contexts = contexts, logger = logger](
+        commands = ${cargo run --locked -p rustls-examples --bin ech-client -- --path "/" public.tls-ech.dev tls-ech.dev |
+  grep 'You are using ECH.'
+},
+        display_name = "Check ech-client (tls-ech.dev)",
+        name = "checkEchClientTlsEchDev"
+    )
+    checkLimitedClient: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-examples --bin limitedclient",
+        display_name = "Check limited client",
+        name = "checkLimitedClient"
+    )
+    checkProviderExampleClient: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-provider-example --example client",
+        display_name = "Check provider-example client",
+        name = "checkProviderExampleClient"
+    )
+    checkRustlsPostQuantumClient: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-post-quantum --example client | grep 'kex=X25519MLKEM768'",
+        display_name = "Check rustls-post-quantum client",
+        name = "checkRustlsPostQuantumClient"
+    )
+    checkServerAcceptor: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-examples --bin server_acceptor -- --help",
+        display_name = "Check server acceptor",
+        name = "checkServerAcceptor"
+    )
+    checkSimple0rttClient: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-examples --bin simple_0rtt_client",
+        display_name = "Check simple 0rtt client",
+        name = "checkSimple0rttClient"
+    )
+    checkSimpleClient: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-examples --bin simpleclient",
+        display_name = "Check simple client",
+        name = "checkSimpleClient"
+    )
+    checkUnbufferedAsyncStdClient: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-examples --bin unbuffered-async-client --features=async-std",
+        display_name = "Check unbuffered async-std client",
+        name = "checkUnbufferedAsyncStdClient"
+    )
+    checkUnbufferedClient: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-examples --bin unbuffered-client",
+        display_name = "Check unbuffered client",
+        name = "checkUnbufferedClient"
+    )
+    checkUnbufferedTokioClient: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-examples --bin unbuffered-async-client",
+        display_name = "Check unbuffered tokio client",
+        name = "checkUnbufferedTokioClient"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installMatrixRustToolchain: RefMasterrustToolchain[contexts = contexts, logger = logger](
+        toolchain = "${{ matrix.rust }}"
+    )
+    installNasmForAwsLcRsOnWindows: setupNasm[contexts = contexts, logger = logger]()
+    installNinjaBuildToolForAwsLcFipsSysOnWindows: ghaSetupNinja[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "exampleTests",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    smokeTestForSecp256r1mlkem768Interop: runAction[contexts = contexts, logger = logger](
+        commands = "cargo run --locked -p rustls-examples --bin tlsclient-mio -- --http --key-exchange secp256r1mlkem768 --verbose openquantumsafe.org",
+        display_name = "Smoke test for secp256r1mlkem768 interop",
+        name = "smokeTestForSecp256r1mlkem768Interop"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installMatrixRustToolchain.trigger
+    installMatrixRustToolchain.continue -> installNasmForAwsLcRsOnWindows.trigger
+    installNasmForAwsLcRsOnWindows.continue -> installNinjaBuildToolForAwsLcFipsSysOnWindows.trigger
+    installNinjaBuildToolForAwsLcFipsSysOnWindows.continue -> checkSimpleClient.trigger
+    checkSimpleClient.continue -> checkLimitedClient.trigger
+    checkLimitedClient.continue -> checkSimple0rttClient.trigger
+    checkSimple0rttClient.continue -> checkUnbufferedClient.trigger
+    checkUnbufferedClient.continue -> checkUnbufferedTokioClient.trigger
+    checkUnbufferedTokioClient.continue -> checkUnbufferedAsyncStdClient.trigger
+    checkUnbufferedAsyncStdClient.continue -> checkServerAcceptor.trigger
+    checkServerAcceptor.continue -> checkEchClientResearchCloudflareCom.trigger
+    checkEchClientResearchCloudflareCom.continue -> checkEchClientDefoIe.trigger
+    checkEchClientDefoIe.continue -> checkEchClientTlsEchDev.trigger
+    checkEchClientTlsEchDev.continue -> checkProviderExampleClient.trigger
+    checkProviderExampleClient.continue -> checkRustlsPostQuantumClient.trigger
+    checkRustlsPostQuantumClient.continue -> smokeTestForSecp256r1mlkem768Interop.trigger
+    smokeTestForSecp256r1mlkem768Interop.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+
+#[generated(true)]
+treatment featurePowerset[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    checkFeaturePowerset: runAction[contexts = contexts, logger = logger](
+        commands = ${cargo hack check --package rustls --feature-powerset --no-dev-deps --group-features aws-lc-rs,aws-lc-rs --group-features fips,aws-lc-rs --mutually-exclusive-features fips,ring --mutually-exclusive-features custom_provider,aws-lc-rs --mutually-exclusive-features custom_provider,ring
+},
+        display_name = "Check feature powerset",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "RUSTFLAGS",
+                    "--deny warnings"
+                    )]
+            )
+        ),
+        name = "checkFeaturePowerset"
+    )
+    checkoutSources: checkout[contexts = contexts, logger = logger](
+        persist_credentials = "false"
+    )
+    installCargoHack: installAction[contexts = contexts, logger = logger]()
+    installStableToolchain: RefStablerustToolchain[contexts = contexts, logger = logger]()
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "featurePowerset",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> checkoutSources.trigger
+    checkoutSources.continue -> installStableToolchain.trigger
+    installStableToolchain.continue -> installCargoHack.trigger
+    installCargoHack.continue -> checkFeaturePowerset.trigger
+    checkFeaturePowerset.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> checkoutSources.post_trigger
+}
+

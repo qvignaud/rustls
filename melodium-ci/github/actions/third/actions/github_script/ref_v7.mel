@@ -1,0 +1,77 @@
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[github_action(actions/github-script@v7)]
+#[generated(true)]
+treatment githubScript[contexts: JavaScriptEngine, logger: Logger](
+        var base_url: string = "",
+        var debug: string = "${{ runner.debug == '1' }}",
+        var github_token: string = "${{ github.token }}",
+        var previews: string = "",
+        var result_encoding: string = "json",
+        var retries: string = "0",
+        var retry_exempt_status_codes: string = "400,401,403,404,422",
+        var script: string = "",
+        var user_agent: string = "actions/github-script"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+{
+    mainAction: runAction[contexts = contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/actions/github_script/ref_v7/dist/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_SCRIPT",
+                    script
+                    ),
+                |entry(
+                    "INPUT_GITHUB-TOKEN",
+                    github_token
+                    ),
+                |entry(
+                    "INPUT_DEBUG",
+                    debug
+                    ),
+                |entry(
+                    "INPUT_USER-AGENT",
+                    user_agent
+                    ),
+                |entry(
+                    "INPUT_PREVIEWS",
+                    previews
+                    ),
+                |entry(
+                    "INPUT_RESULT-ENCODING",
+                    result_encoding
+                    ),
+                |entry(
+                    "INPUT_RETRIES",
+                    retries
+                    ),
+                |entry(
+                    "INPUT_RETRY-EXEMPT-STATUS-CODES",
+                    retry_exempt_status_codes
+                    ),
+                |entry(
+                    "INPUT_BASE-URL",
+                    base_url
+                    )]
+            )
+        ),
+        name = "githubScript"
+    )
+
+    Self.trigger -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

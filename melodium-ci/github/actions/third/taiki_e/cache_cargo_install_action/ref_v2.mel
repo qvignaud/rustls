@@ -1,0 +1,183 @@
+use root/github/actions/third/actions/cache/ref_v4::cache
+use cicd/services/github::replicateContextsForComposite
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/flow::one
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(taiki-e/cache-cargo-install-action@v2)]
+treatment cacheCargoInstallAction[contexts: JavaScriptEngine, logger: Logger](
+        var all_features: string = "false",
+        var features: string = "",
+        var git: string = "",
+        var locked: string = "true",
+        var no_default_features: string = "false",
+        var rev: string = "",
+        var tag: string = "",
+        var tool: string = ""
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  model composite_contexts: JavaScriptEngine()
+{
+    cache[contexts = contexts, logger = logger](
+        key = "${{ steps.pre.outputs.key }}",
+        path = "${{ steps.pre.outputs.path }}"
+    )
+    installInputsTool: runAction[contexts = contexts, logger = logger](
+        commands = ${{{export CARGO_NET_RETRY=10
+# shellcheck disable=SC2206
+args=(-f "${{ steps.pre.outputs.tool }}" --root "${RUNNER_TOOL_CACHE}/${{ steps.pre.outputs.tool }}" ${{ steps.pre.outputs.locked }} ${{ steps.pre.outputs.features_flag }} ${{ steps.pre.outputs.no_default_features_flag }} ${{ steps.pre.outputs.all_features_flag }})
+if [[ -n "${{ steps.pre.outputs.git }}" ]]; then
+  if [[ -n "${{ steps.pre.outputs.tag }}" ]]; then
+    (
+      set -x
+      cargo install "${args[@]}" --git "${{ steps.pre.outputs.git }}" --tag "${{ steps.pre.outputs.tag }}"
+    )
+  else
+    (
+      set -x
+      cargo install "${args[@]}" --git "${{ steps.pre.outputs.git }}" --rev "${{ steps.pre.outputs.rev }}"
+    )
+  fi
+else
+  (
+    set -x
+    cargo install "${args[@]}" --version "${{ steps.pre.outputs.version }}"
+  )
+fi
+}}},
+        display_name = "Install ${{ inputs.tool }}",
+        if = "steps.cache.outputs.cache-hit != 'true'",
+        name = "installInputsTool",
+        shell = "bash"
+    )
+    postExec: one<void>()
+    pre: runAction[contexts = contexts, logger = logger](
+        commands = "bash --noprofile --norc \"${GITHUB_ACTION_PATH:?}/pre.sh\"",
+        display_name = "Pre Cache",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_GIT",
+                    "${{ inputs.git }}"
+                    ),
+                |entry(
+                    "INPUT_ALL_FEATURES",
+                    "${{ inputs.all-features }}"
+                    ),
+                |entry(
+                    "INPUT_TOOL",
+                    "${{ inputs.tool }}"
+                    ),
+                |entry(
+                    "INPUT_LOCKED",
+                    "${{ inputs.locked }}"
+                    ),
+                |entry(
+                    "ACTION_USER_AGENT",
+                    "${{ github.action_repository }} (${{ github.action_ref }})"
+                    ),
+                |entry(
+                    "INPUT_TAG",
+                    "${{ inputs.tag }}"
+                    ),
+                |entry(
+                    "INPUT_REV",
+                    "${{ inputs.rev }}"
+                    ),
+                |entry(
+                    "INPUT_FEATURES",
+                    "${{ inputs.features }}"
+                    ),
+                |entry(
+                    "INPUT_NO_DEFAULT_FEATURES",
+                    "${{ inputs.no-default-features }}"
+                    )]
+            )
+        ),
+        id = "pre",
+        name = "pre",
+        shell = "bash"
+    )
+    replicateContextsForComposite[composite_contexts = composite_contexts, main_contexts = contexts](
+        inputs = |map(
+        [|entry(
+                "tool",
+                ""
+                ),
+            |entry(
+                "locked",
+                ""
+                ),
+            |entry(
+                "git",
+                ""
+                ),
+            |entry(
+                "tag",
+                ""
+                ),
+            |entry(
+                "rev",
+                ""
+                ),
+            |entry(
+                "features",
+                ""
+                ),
+            |entry(
+                "no-default-features",
+                ""
+                ),
+            |entry(
+                "all-features",
+                ""
+                )]
+        )
+    )
+    step0: runAction[contexts = contexts, logger = logger](
+        commands = ${set -eu
+if ! command -v bash >/dev/null; then
+  if grep -Eq '^ID=alpine' /etc/os-release; then
+    printf '::group::Install packages required for cache-cargo-install-action (bash)\n'
+    # NB: sync with apk_install in pre.sh
+    if command -v sudo >/dev/null; then
+      sudo apk --no-cache add bash
+    elif command -v doas >/dev/null; then
+      doas apk --no-cache add bash
+    else
+      apk --no-cache add bash
+    fi
+    printf '::endgroup::\n'
+  else
+    printf '::error::cache-cargo-install-action requires bash\n'
+    exit 1
+  fi
+fi
+},
+        if = "runner.os == 'Linux'",
+        name = "step0",
+        shell = "sh"
+    )
+
+    Self.trigger -> replicateContextsForComposite.trigger
+    replicateContextsForComposite.ready -> step0.trigger
+    step0.continue -> pre.trigger
+    pre.continue -> cache.trigger
+    cache.continue -> installInputsTool.trigger
+    installInputsTool.completed -> Self.completed
+    installInputsTool.failed -> Self.failed
+    installInputsTool.continue -> Self.continue
+    installInputsTool.completed -> postExec.a
+    installInputsTool.failed -> postExec.b
+    postExec.value -> cache.post_trigger
+}
+

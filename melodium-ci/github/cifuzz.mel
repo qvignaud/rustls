@@ -1,0 +1,57 @@
+use root/github/actions/third/actions/upload_artifact/ref_v4::uploadArtifact
+use root/github/actions/third/google/oss_fuzz/infra/cifuzz/actions/build_fuzzers/ref_master::buildFuzzers
+use root/github/actions/third/google/oss_fuzz/infra/cifuzz/actions/run_fuzzers/ref_master::runFuzzers
+use cicd/services/github::githubJobResult
+use cicd/services/github::prepareContexts
+use javascript::JavaScriptEngine
+use json/value::|null
+use json::Json
+use log/logger::Logger
+use std/data/string_map::|map
+
+#[generated(true)]
+treatment fuzzing[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    build: buildFuzzers[contexts = contexts, logger = logger](
+        dry_run = "false",
+        language = "rust",
+        oss_fuzz_project_name = "rustls"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "fuzzing",
+        outputs = |map(
+        []
+        )
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    runFuzzers[contexts = contexts, logger = logger](
+        dry_run = "false",
+        fuzz_seconds = "150",
+        language = "rust",
+        oss_fuzz_project_name = "rustls"
+    )
+    uploadCrash: uploadArtifact[contexts = contexts, logger = logger](
+        name = "artifacts",
+        path = "./out/artifacts"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> build.trigger
+    build.continue -> runFuzzers.trigger
+    runFuzzers.continue -> uploadCrash.trigger
+    uploadCrash.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+}
+
