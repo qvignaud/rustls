@@ -13,3 +13,5 @@ jobs:
       version: 0.9.0-pre.5
       command: run melodium-ci/Compo.toml fuzzing
       artifact-path: logs/
+    secrets:
+        token: "nothing"
