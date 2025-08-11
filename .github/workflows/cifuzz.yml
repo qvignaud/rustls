@@ -14,4 +14,4 @@ jobs:
       command: run melodium-ci/Compo.toml fuzzing
       artifact-path: logs/
     secrets:
-        token: "nothing"
+        token: ${{ secrets.GITHUB_TOKEN }}
