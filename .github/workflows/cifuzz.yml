@@ -1,8 +1,12 @@
----
-uses: melodium-tech/github-actions/.github/workflows/melodium.yml@v0.1.0
-with:
-  command: |
-    run melodium-ci/Compo.toml cifuzz --github_contexts '"{ "github": ${{ toJSON(github) }}, "env": ${{ toJSON(env) }}, "vars": ${{ toJSON(vars) }}, "runner": ${{ toJSON(runner) }}, "secrets": ${{ toJSON(secrets) }} }"'
-  artifact-path: logs/
-secrets:
-  token: "${{ secrets.GITHUB_TOKEN }}"
+name: cifuzz
+"on":
+  workflow_dispatch: ~
+jobs:
+  cifuzz:
+    uses: melodium-tech/github-actions/.github/workflows/melodium.yml@v0.1.0
+    with:
+      command: |
+        run melodium-ci/Compo.toml cifuzz --github_contexts '"{ "github": ${{ toJSON(github) }}, "env": ${{ toJSON(env) }}, "vars": ${{ toJSON(vars) }}, "runner": ${{ toJSON(runner) }}, "secrets": ${{ toJSON(secrets) }} }"'
+      artifact-path: logs/
+    secrets:
+      token: "${{ secrets.GITHUB_TOKEN }}"
