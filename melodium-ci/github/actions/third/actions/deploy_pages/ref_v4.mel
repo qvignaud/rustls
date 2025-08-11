@@ -6,8 +6,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(actions/deploy-pages@v4)]
 #[generated(true)]
+#[github_action(actions/deploy-pages@v4)]
 treatment deployPages[contexts: JavaScriptEngine, logger: Logger](
         var artifact_name: string = "github-pages",
         var error_count: string = "10",

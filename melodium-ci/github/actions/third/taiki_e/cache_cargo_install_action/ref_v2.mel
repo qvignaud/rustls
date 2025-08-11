@@ -9,8 +9,8 @@ use std/data/string_map::|map
 use std/flow::one
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(taiki-e/cache-cargo-install-action@v2)]
+#[generated(true)]
 treatment cacheCargoInstallAction[contexts: JavaScriptEngine, logger: Logger](
         var all_features: string = "false",
         var features: string = "",
@@ -66,40 +66,40 @@ fi
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "INPUT_GIT",
-                    "${{ inputs.git }}"
-                    ),
-                |entry(
-                    "INPUT_ALL_FEATURES",
-                    "${{ inputs.all-features }}"
-                    ),
-                |entry(
-                    "INPUT_TOOL",
-                    "${{ inputs.tool }}"
-                    ),
-                |entry(
-                    "INPUT_LOCKED",
-                    "${{ inputs.locked }}"
+                    "INPUT_TAG",
+                    "${{ inputs.tag }}"
                     ),
                 |entry(
                     "ACTION_USER_AGENT",
                     "${{ github.action_repository }} (${{ github.action_ref }})"
                     ),
                 |entry(
-                    "INPUT_TAG",
-                    "${{ inputs.tag }}"
+                    "INPUT_ALL_FEATURES",
+                    "${{ inputs.all-features }}"
                     ),
                 |entry(
-                    "INPUT_REV",
-                    "${{ inputs.rev }}"
+                    "INPUT_LOCKED",
+                    "${{ inputs.locked }}"
                     ),
                 |entry(
                     "INPUT_FEATURES",
                     "${{ inputs.features }}"
                     ),
                 |entry(
+                    "INPUT_TOOL",
+                    "${{ inputs.tool }}"
+                    ),
+                |entry(
                     "INPUT_NO_DEFAULT_FEATURES",
                     "${{ inputs.no-default-features }}"
+                    ),
+                |entry(
+                    "INPUT_GIT",
+                    "${{ inputs.git }}"
+                    ),
+                |entry(
+                    "INPUT_REV",
+                    "${{ inputs.rev }}"
                     )]
             )
         ),

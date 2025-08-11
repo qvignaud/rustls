@@ -1,17 +1,8 @@
 ---
-name: CIFuzz
-"on":
-  - pull_request
-  - workflow_dispatch
-concurrency:
-  group: "${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}"
-  cancel-in-progress: true
-jobs:
-  Fuzzing:
-    uses: melodium-tech/github-actions/.github/workflows/melodium.yml@v0.9.0-pre.2
-    with:
-      version: 0.9.0-pre.5
-      command: run melodium-ci/Compo.toml fuzzing
-      artifact-path: logs/
-    secrets:
-        token: ${{ secrets.GITHUB_TOKEN }}
+uses: melodium-tech/github-actions/.github/workflows/melodium.yml@v0.1.0
+with:
+  command: |
+    run melodium-ci/Compo.toml cifuzz --github_contexts '"{ "github": ${{ toJSON(github) }}, "env": ${{ toJSON(env) }}, "vars": ${{ toJSON(vars) }}, "runner": ${{ toJSON(runner) }}, "secrets": ${{ toJSON(secrets) }} }"'
+  artifact-path: logs/
+secrets:
+  token: "${{ secrets.GITHUB_TOKEN }}"

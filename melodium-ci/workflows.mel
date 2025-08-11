@@ -1,0 +1,302 @@
+use root/github/build::audit
+use root/github/build::benchmarks
+use root/github/build::bogo
+use root/github/build::build as Buildbuild
+use root/github/build::checkExternalTypes
+use root/github/build::clippy
+use root/github/build::clippyNightly
+use root/github/build::coverage
+use root/github/build::cross
+use root/github/build::docs as Builddocs
+use root/github/build::features
+use root/github/build::format
+use root/github/build::formatUnstable
+use root/github/build::fuzz
+use root/github/build::minver
+use root/github/build::msrv
+use root/github/build::opensslTests
+use root/github/build::semver
+use root/github/build::taplo
+use root/github/cifuzz::fuzzing
+use root/github/daily_tests::connectTests
+use root/github/daily_tests::exampleTests
+use root/github/daily_tests::featurePowerset
+use root/github/docs::deploy
+use root/github/docs::generate
+use log/logger::Logger
+use std/engine/util::startup
+use std/flow/concentrate::Concentrator
+use std/flow/concentrate::concentrateBlock
+use std/flow/concentrate::concentrated
+use std/flow::trigger
+
+#[generated(true)]
+#[github_workflow(/.github/workflows/build.yml)]
+treatment build[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  model finishConcentrator: Concentrator()
+{
+    audit[logger = logger](
+        github_contexts = github_contexts
+    )
+    auditFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    benchmarks[logger = logger](
+        github_contexts = github_contexts
+    )
+    benchmarksFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    bogo[logger = logger](
+        github_contexts = github_contexts
+    )
+    bogoFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    build: Buildbuild[logger = logger](
+        github_contexts = github_contexts
+    )
+    buildFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    checkExternalTypes[logger = logger](
+        github_contexts = github_contexts
+    )
+    checkExternalTypesFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    clippy[logger = logger](
+        github_contexts = github_contexts
+    )
+    clippyFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    clippyNightly[logger = logger](
+        github_contexts = github_contexts
+    )
+    clippyNightlyFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    coverage[logger = logger](
+        github_contexts = github_contexts
+    )
+    coverageFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    cross[logger = logger](
+        github_contexts = github_contexts
+    )
+    crossFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    docs: Builddocs[logger = logger](
+        github_contexts = github_contexts
+    )
+    docsFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    features[logger = logger](
+        github_contexts = github_contexts
+    )
+    featuresFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    finish: concentrated<void>[concentrator = finishConcentrator]()
+    finishTrigger: trigger<void>()
+    format[logger = logger](
+        github_contexts = github_contexts
+    )
+    formatFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    formatUnstable[logger = logger](
+        github_contexts = github_contexts
+    )
+    formatUnstableFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    fuzz[logger = logger](
+        github_contexts = github_contexts
+    )
+    fuzzFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    minver[logger = logger](
+        github_contexts = github_contexts
+    )
+    minverFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    msrv[logger = logger](
+        github_contexts = github_contexts
+    )
+    msrvFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    opensslTests[logger = logger](
+        github_contexts = github_contexts
+    )
+    opensslTestsFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    semver[logger = logger](
+        github_contexts = github_contexts
+    )
+    semverFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    taplo[logger = logger](
+        github_contexts = github_contexts
+    )
+    taploFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+
+    Self.trigger -> finish.trigger
+    finish.data -> finishTrigger.stream
+    Self.trigger -> build.trigger
+    build.finished -> buildFinished.data
+    Self.trigger -> msrv.trigger
+    msrv.finished -> msrvFinished.data
+    Self.trigger -> features.trigger
+    features.finished -> featuresFinished.data
+    Self.trigger -> bogo.trigger
+    bogo.finished -> bogoFinished.data
+    Self.trigger -> fuzz.trigger
+    fuzz.finished -> fuzzFinished.data
+    Self.trigger -> benchmarks.trigger
+    benchmarks.finished -> benchmarksFinished.data
+    Self.trigger -> docs.trigger
+    docs.finished -> docsFinished.data
+    Self.trigger -> coverage.trigger
+    coverage.finished -> coverageFinished.data
+    Self.trigger -> minver.trigger
+    minver.finished -> minverFinished.data
+    Self.trigger -> cross.trigger
+    cross.finished -> crossFinished.data
+    Self.trigger -> semver.trigger
+    semver.finished -> semverFinished.data
+    Self.trigger -> format.trigger
+    format.finished -> formatFinished.data
+    Self.trigger -> formatUnstable.trigger
+    formatUnstable.finished -> formatUnstableFinished.data
+    Self.trigger -> clippy.trigger
+    clippy.finished -> clippyFinished.data
+    Self.trigger -> clippyNightly.trigger
+    clippyNightly.finished -> clippyNightlyFinished.data
+    Self.trigger -> checkExternalTypes.trigger
+    checkExternalTypes.finished -> checkExternalTypesFinished.data
+    Self.trigger -> taplo.trigger
+    taplo.finished -> taploFinished.data
+    Self.trigger -> opensslTests.trigger
+    opensslTests.finished -> opensslTestsFinished.data
+    Self.trigger -> audit.trigger
+    audit.finished -> auditFinished.data
+    finishTrigger.end -> Self.finished
+}
+
+treatment buildEntrypoint(
+        var github_contexts: string
+)
+  model logger: Logger()
+{
+    build[logger = logger](
+        github_contexts = github_contexts
+    )
+    startup()
+
+    startup.trigger -> build.trigger
+}
+
+#[generated(true)]
+#[github_workflow(/.github/workflows/cifuzz.yml)]
+treatment cifuzz[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  model finishConcentrator: Concentrator()
+{
+    finish: concentrated<void>[concentrator = finishConcentrator]()
+    finishTrigger: trigger<void>()
+    fuzzing[logger = logger](
+        github_contexts = github_contexts
+    )
+    fuzzingFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+
+    Self.trigger -> finish.trigger
+    finish.data -> finishTrigger.stream
+    Self.trigger -> fuzzing.trigger
+    fuzzing.finished -> fuzzingFinished.data
+    finishTrigger.end -> Self.finished
+}
+
+treatment cifuzzEntrypoint(
+        var github_contexts: string
+)
+  model logger: Logger()
+{
+    cifuzz[logger = logger](
+        github_contexts = github_contexts
+    )
+    startup()
+
+    startup.trigger -> cifuzz.trigger
+}
+
+#[github_workflow(/.github/workflows/daily-tests.yml)]
+#[generated(true)]
+treatment dailyTests[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  model finishConcentrator: Concentrator()
+{
+    connectTests[logger = logger](
+        github_contexts = github_contexts
+    )
+    connectTestsFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    exampleTests[logger = logger](
+        github_contexts = github_contexts
+    )
+    exampleTestsFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    featurePowerset[logger = logger](
+        github_contexts = github_contexts
+    )
+    featurePowersetFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    finish: concentrated<void>[concentrator = finishConcentrator]()
+    finishTrigger: trigger<void>()
+
+    Self.trigger -> finish.trigger
+    finish.data -> finishTrigger.stream
+    Self.trigger -> connectTests.trigger
+    connectTests.finished -> connectTestsFinished.data
+    Self.trigger -> exampleTests.trigger
+    exampleTests.finished -> exampleTestsFinished.data
+    Self.trigger -> featurePowerset.trigger
+    featurePowerset.finished -> featurePowersetFinished.data
+    finishTrigger.end -> Self.finished
+}
+
+treatment dailyTestsEntrypoint(
+        var github_contexts: string
+)
+  model logger: Logger()
+{
+    dailyTests[logger = logger](
+        github_contexts = github_contexts
+    )
+    startup()
+
+    startup.trigger -> dailyTests.trigger
+}
+
+#[github_workflow(/.github/workflows/docs.yml)]
+#[generated(true)]
+treatment docs[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  model finishConcentrator: Concentrator()
+{
+    deploy[logger = logger](
+        github_contexts = github_contexts
+    )
+    deployFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    finish: concentrated<void>[concentrator = finishConcentrator]()
+    finishTrigger: trigger<void>()
+    generate[logger = logger](
+        github_contexts = github_contexts
+    )
+    generateFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+
+    Self.trigger -> finish.trigger
+    finish.data -> finishTrigger.stream
+    Self.trigger -> generate.trigger
+    generate.finished -> generateFinished.data
+    Self.trigger -> deploy.trigger
+    deploy.finished -> deployFinished.data
+    finishTrigger.end -> Self.finished
+}
+
+treatment docsEntrypoint(
+        var github_contexts: string
+)
+  model logger: Logger()
+{
+    docs[logger = logger](
+        github_contexts = github_contexts
+    )
+    startup()
+
+    startup.trigger -> docs.trigger
+}
+

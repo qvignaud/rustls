@@ -6,8 +6,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(obi1kenobi/cargo-semver-checks-action@v2)]
+#[generated(true)]
 treatment cargoSemverChecksAction[contexts: JavaScriptEngine, logger: Logger](
         var baseline_rev: string = "",
         var baseline_root: string = "",

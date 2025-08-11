@@ -146,28 +146,8 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
                     "${{ inputs.TOKEN }}"
                     ),
                 |entry(
-                    "INPUT_JOBSUMMARY",
-                    "${{ inputs.JOBSUMMARY }}"
-                    ),
-                |entry(
-                    "INPUT_ARGS",
-                    "${{ inputs.ARGS }}"
-                    ),
-                |entry(
                     "INPUT_FAILIFEMPTY",
                     "${{ inputs.FAILIFEMPTY }}"
-                    ),
-                |entry(
-                    "INPUT_DEBUG",
-                    "${{ inputs.DEBUG }}"
-                    ),
-                |entry(
-                    "INPUT_FORMAT",
-                    "${{ inputs.FORMAT }}"
-                    ),
-                |entry(
-                    "INPUT_OUTPUT",
-                    "${{ inputs.OUTPUT }}"
                     ),
                 |entry(
                     "INPUT_FAIL",
@@ -176,6 +156,26 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
                 |entry(
                     "INPUT_CHECKBOX",
                     "${{ inputs.CHECKBOX }}"
+                    ),
+                |entry(
+                    "INPUT_DEBUG",
+                    "${{ inputs.DEBUG }}"
+                    ),
+                |entry(
+                    "INPUT_ARGS",
+                    "${{ inputs.ARGS }}"
+                    ),
+                |entry(
+                    "INPUT_JOBSUMMARY",
+                    "${{ inputs.JOBSUMMARY }}"
+                    ),
+                |entry(
+                    "INPUT_FORMAT",
+                    "${{ inputs.FORMAT }}"
+                    ),
+                |entry(
+                    "INPUT_OUTPUT",
+                    "${{ inputs.OUTPUT }}"
                     )]
             )
         ),

@@ -376,7 +376,7 @@ treatment checkExternalTypes[logger: Logger](
         tool = "cargo-check-external-types"
     )
     installRustToolchain: RefMasterrustToolchain[contexts = contexts, logger = logger](
-        toolchain = "nightly-2025-05-04"
+        toolchain = "nightly-2025-08-06"
     )
     jobResult: githubJobResult[contexts = contexts](
         local_context = |null(

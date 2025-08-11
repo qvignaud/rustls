@@ -6,8 +6,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(seanmiddleditch/gha-setup-ninja@v6)]
 #[generated(true)]
+#[github_action(seanmiddleditch/gha-setup-ninja@v6)]
 treatment ghaSetupNinja[contexts: JavaScriptEngine, logger: Logger](
         var destination: string = "ninja-build",
         var http_proxy: string = "",

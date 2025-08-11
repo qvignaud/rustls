@@ -65,12 +65,12 @@ fi
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "ACTION_USER_AGENT",
-                    "${{ github.action_repository }} (${{ github.action_ref }})"
-                    ),
-                |entry(
                     "DEFAULT_GITHUB_TOKEN",
                     "${{ github.token }}"
+                    ),
+                |entry(
+                    "ACTION_USER_AGENT",
+                    "${{ github.action_repository }} (${{ github.action_ref }})"
                     ),
                 |entry(
                     "INPUT_TOOL",

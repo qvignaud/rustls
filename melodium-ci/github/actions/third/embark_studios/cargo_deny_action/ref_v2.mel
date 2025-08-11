@@ -6,8 +6,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(EmbarkStudios/cargo-deny-action@v2)]
+#[generated(true)]
 treatment cargoDenyAction[contexts: JavaScriptEngine, logger: Logger](
         var args: Option<string> = _,
         var arguments: string = "--all-features",

@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(dtolnay/rust-toolchain@nightly)]
+#[generated(true)]
 treatment rustToolchain[contexts: JavaScriptEngine, logger: Logger](
         var components: string = "",
         var target: string = "",
@@ -30,12 +30,12 @@ echo "downgrade=${{steps.parse.outputs.toolchain == 'nightly' && inputs.componen
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "targets",
-                    "${{inputs.targets || inputs.target || ''}}"
-                    ),
-                |entry(
                     "components",
                     "${{inputs.components}}"
+                    ),
+                |entry(
+                    "targets",
+                    "${{inputs.targets || inputs.target || ''}}"
                     )]
             )
         ),
