@@ -6,7 +6,7 @@ jobs:
     uses: melodium-tech/github-actions/.github/workflows/melodium.yml@v0.1.0
     with:
       command: |
-        run melodium-ci/Compo.toml cifuzz --github_contexts '"{ "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "runner": ${{ toJSON(runner) }}, "secrets": ${{ toJSON(secrets) }} }"'
+        run melodium-ci/Compo.toml cifuzz --github_contexts '"{ "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": ${{ toJSON(secrets) }} }"'
       artifact-path: logs/
     secrets:
       token: "${{ secrets.GITHUB_TOKEN }}"
