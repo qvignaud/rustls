@@ -7,7 +7,9 @@ jobs:
     with:
       version: 0.9.0-pre.5
       command: |
-        run melodium-ci/Compo.toml cifuzz --github_contexts '"{ "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }} }"'
+        pre='${{{{'
+        post='}}}}'
+        run melodium-ci/Compo.toml cifuzz --github_contexts "\"$pre { \"github\": ${{ toJSON(github) }}, \"vars\": ${{ toJSON(vars) }} } $post\""
       artifact-path: logs/
     secrets:
       token: "${{ secrets.GITHUB_TOKEN }}"
