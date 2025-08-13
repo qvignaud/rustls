@@ -28,7 +28,7 @@ treatment cargoDenyAction[contexts: JavaScriptEngine, logger: Logger](
   output failed: Block<void>
 {
     buildImage: runAction[contexts = contexts, logger = logger](
-        commands = "docker build --tag cargo-deny-action:v2 --file Dockerfile ci/github/actions/third/EmbarkStudios/cargo-deny-action/",
+        commands = "docker build --tag cargo-deny-action:v2 --file Dockerfile melodium-ci/github/actions/third/embark_studios/cargo_deny_action/ref_v2/",
         name = "build:cargoDenyAction"
     )
     entrypoint: runAction[contexts = contexts, logger = logger](

@@ -6,8 +6,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(actions/setup-go@v5)]
+#[generated(true)]
 treatment setupGo[contexts: JavaScriptEngine, logger: Logger](
         var architecture: string = "",
         var cache: string = "true",

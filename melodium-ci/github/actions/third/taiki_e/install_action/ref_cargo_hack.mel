@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(taiki-e/install-action@cargo-hack)]
 #[generated(true)]
+#[github_action(taiki-e/install-action@cargo-hack)]
 treatment installAction[contexts: JavaScriptEngine, logger: Logger](
         var checksum: string = "true",
         var fallback: string = "cargo-binstall",
@@ -65,24 +65,24 @@ fi
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "DEFAULT_GITHUB_TOKEN",
-                    "${{ github.token }}"
-                    ),
-                |entry(
-                    "INPUT_TOOL",
-                    "${{ inputs.tool }}"
-                    ),
-                |entry(
-                    "INPUT_FALLBACK",
-                    "${{ inputs.fallback }}"
-                    ),
-                |entry(
                     "ACTION_USER_AGENT",
                     "${{ github.action_repository }} (${{ github.action_ref }})"
                     ),
                 |entry(
                     "INPUT_CHECKSUM",
                     "${{ inputs.checksum }}"
+                    ),
+                |entry(
+                    "DEFAULT_GITHUB_TOKEN",
+                    "${{ github.token }}"
+                    ),
+                |entry(
+                    "INPUT_FALLBACK",
+                    "${{ inputs.fallback }}"
+                    ),
+                |entry(
+                    "INPUT_TOOL",
+                    "${{ inputs.tool }}"
                     )]
             )
         ),

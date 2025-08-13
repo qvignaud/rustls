@@ -30,8 +30,8 @@ use std/flow/concentrate::concentrateBlock
 use std/flow/concentrate::concentrated
 use std/flow::trigger
 
-#[generated(true)]
 #[github_workflow(/.github/workflows/build.yml)]
+#[generated(true)]
 treatment build[logger: Logger](
         var github_contexts: string
 )
@@ -174,8 +174,8 @@ treatment buildEntrypoint(
     startup.trigger -> build.trigger
 }
 
-#[generated(true)]
 #[github_workflow(/.github/workflows/cifuzz.yml)]
+#[generated(true)]
 treatment cifuzz[logger: Logger](
         var github_contexts: string
 )
@@ -197,8 +197,6 @@ treatment cifuzz[logger: Logger](
     finishTrigger.end -> Self.finished
 }
 
-use cicd/logging::manageLogs
-
 treatment cifuzzEntrypoint(
         var github_contexts: string
 )
@@ -208,10 +206,8 @@ treatment cifuzzEntrypoint(
         github_contexts = github_contexts
     )
     startup()
-    
-    manageLogs[logger=logger](output_directory="/tmp/out.log")
 
-    startup.trigger -> cifuzz.trigger,finished -> manageLogs.stop
+    startup.trigger -> cifuzz.trigger
 }
 
 #[github_workflow(/.github/workflows/daily-tests.yml)]

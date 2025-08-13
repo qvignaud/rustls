@@ -1,5 +1,5 @@
 use root/github/actions/third/actions/cache/ref_v4::cache
-use root/github/actions/third/actions/checkout/ref_v4::checkout
+use root/github/actions/third/actions/checkout/ref_v5::checkout
 use root/github/actions/third/actions/deploy_pages/ref_v4::deployPages
 use root/github/actions/third/actions/upload_pages_artifact/ref_v3::uploadPagesArtifact
 use root/github/actions/third/dtolnay/rust_toolchain/ref_nightly::rustToolchain

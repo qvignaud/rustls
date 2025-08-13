@@ -1,5 +1,5 @@
 use root/github/actions/third/actions/cache/ref_v4::cache
-use root/github/actions/third/actions/checkout/ref_v4::checkout
+use root/github/actions/third/actions/checkout/ref_v5::checkout
 use root/github/actions/third/actions/setup_go/ref_v5::setupGo
 use root/github/actions/third/codecov/codecov_action/ref_v5::codecovAction
 use root/github/actions/third/dtolnay/rust_toolchain/ref_master::rustToolchain as RefMasterrustToolchain

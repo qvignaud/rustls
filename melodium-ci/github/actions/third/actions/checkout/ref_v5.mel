@@ -6,7 +6,7 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(actions/checkout@v4)]
+#[github_action(actions/checkout@v5)]
 #[generated(true)]
 treatment checkout[contexts: JavaScriptEngine, logger: Logger](
         var clean: string = "true",
@@ -38,7 +38,7 @@ treatment checkout[contexts: JavaScriptEngine, logger: Logger](
   output post_completed: Block<void>
 {
     mainAction: runAction[contexts = contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/actions/checkout/ref_v4/dist/index.js",
+        commands = "node24 ci/github/actions/third/actions/checkout/ref_v5/dist/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(
@@ -126,7 +126,7 @@ treatment checkout[contexts: JavaScriptEngine, logger: Logger](
         name = "checkout"
     )
     postAction: runAction[contexts = contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/actions/checkout/ref_v4/dist/index.js",
+        commands = "node24 ci/github/actions/third/actions/checkout/ref_v5/dist/index.js",
         name = "post:checkout"
     )
 

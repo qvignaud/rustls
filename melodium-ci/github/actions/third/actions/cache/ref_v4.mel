@@ -6,8 +6,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(actions/cache@v4)]
 #[generated(true)]
+#[github_action(actions/cache@v4)]
 treatment cache[contexts: JavaScriptEngine, logger: Logger](
         var enable_cross_os_archive: string = "false",
         var fail_on_cache_miss: string = "false",

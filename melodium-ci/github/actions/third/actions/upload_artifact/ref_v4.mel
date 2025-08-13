@@ -6,8 +6,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(actions/upload-artifact@v4)]
+#[generated(true)]
 treatment uploadArtifact[contexts: JavaScriptEngine, logger: Logger](
         var compression_level: string = "6",
         var if_no_files_found: string = "warn",
