@@ -3,7 +3,7 @@ name: cifuzz
   workflow_dispatch: ~
 jobs:
   cifuzz:
-    uses: melodium-tech/github-actions/.github/workflows/melodium.yml@v0.9.0-pre.2
+    uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@temp_ubuntu
     with:
       version: 0.9.0-pre.5
       command: |
