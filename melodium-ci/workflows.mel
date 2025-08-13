@@ -197,6 +197,8 @@ treatment cifuzz[logger: Logger](
     finishTrigger.end -> Self.finished
 }
 
+use cicd/logging::manageLogs
+
 treatment cifuzzEntrypoint(
         var github_contexts: string
 )
@@ -206,8 +208,10 @@ treatment cifuzzEntrypoint(
         github_contexts = github_contexts
     )
     startup()
+    
+    manageLogs[logger=logger](output_directory="/tmp/out.log")
 
-    startup.trigger -> cifuzz.trigger
+    startup.trigger -> cifuzz.trigger,finished -> manageLogs.stop
 }
 
 #[github_workflow(/.github/workflows/daily-tests.yml)]
