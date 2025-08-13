@@ -28,11 +28,11 @@ treatment buildFuzzers[contexts: JavaScriptEngine, logger: Logger](
   output failed: Block<void>
 {
     buildImage: runAction[contexts = contexts, logger = logger](
-        commands = "docker build --tag build_fuzzers:master --file build_fuzzers.Dockerfile melodium-ci/github/actions/third/google/oss_fuzz/infra/cifuzz/actions/build_fuzzers/ref_master/infra/cifuzz/actions/build_fuzzers/../../..",
+        commands = "docker build --tag build_fuzzers:master --file melodium-ci/github/actions/third/google/oss_fuzz/infra/cifuzz/actions/build_fuzzers/ref_master/infra/cifuzz/actions/build_fuzzers/../../../build_fuzzers.Dockerfile melodium-ci/github/actions/third/google/oss_fuzz/infra/cifuzz/actions/build_fuzzers/ref_master/infra/cifuzz/actions/build_fuzzers/../../..",
         name = "build:buildFuzzers"
     )
     entrypoint: runAction[contexts = contexts, logger = logger](
-        commands = "docker run --volume \"$GITHUB_WORKSPACE:/github/workspace\" --mount type=bind,src=$GITHUB_OUTPUT,dst=/github/output.lst --env GITHUB_OUTPUT=/github/output.lst  --env 'SANITIZER=${{ inputs.sanitizer }}' --env 'LOW_DISK_SPACE=True' --env 'OSS_FUZZ_PROJECT_NAME=${{ inputs.oss-fuzz-project-name }}' --env 'DRY_RUN=${{ inputs.dry-run}}' --env 'KEEP_UNAFFECTED_FUZZ_TARGETS=${{ inputs.keep-unaffected-fuzz-targets }}' --env 'LANGUAGE=${{ inputs.language }}' --env 'BAD_BUILD_CHECK=${{ inputs.bad-build-check }}' --env 'CIFUZZ_DEBUG=True' --env 'ALLOWED_BROKEN_TARGETS_PERCENTAGE=${{ inputs.allowed-broken-targets-percentage}}' --env 'ARCHITECTURE=${{ inputs.architecture }}' --env 'CFL_PLATFORM=github' --env 'OUTPUT_SARIF=${{ inputs.output-sarif }}' --env 'PROJECT_SRC_PATH=${{ inputs.project-src-path }}' build_fuzzers:master ",
+        commands = "docker run --volume \"$GITHUB_WORKSPACE:/github/workspace\" --mount type=bind,src=$GITHUB_OUTPUT,dst=/github/output.lst --env GITHUB_OUTPUT=/github/output.lst  --env 'KEEP_UNAFFECTED_FUZZ_TARGETS=${{ inputs.keep-unaffected-fuzz-targets }}' --env 'ARCHITECTURE=${{ inputs.architecture }}' --env 'OSS_FUZZ_PROJECT_NAME=${{ inputs.oss-fuzz-project-name }}' --env 'LANGUAGE=${{ inputs.language }}' --env 'DRY_RUN=${{ inputs.dry-run}}' --env 'CFL_PLATFORM=github' --env 'OUTPUT_SARIF=${{ inputs.output-sarif }}' --env 'CIFUZZ_DEBUG=True' --env 'LOW_DISK_SPACE=True' --env 'BAD_BUILD_CHECK=${{ inputs.bad-build-check }}' --env 'ALLOWED_BROKEN_TARGETS_PERCENTAGE=${{ inputs.allowed-broken-targets-percentage}}' --env 'SANITIZER=${{ inputs.sanitizer }}' --env 'PROJECT_SRC_PATH=${{ inputs.project-src-path }}' build_fuzzers:master ",
         env = |wrap<StringMap>(
         |map(
             [|entry(

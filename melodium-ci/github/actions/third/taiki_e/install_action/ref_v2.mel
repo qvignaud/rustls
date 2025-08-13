@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(taiki-e/install-action@v2)]
 #[generated(true)]
+#[github_action(taiki-e/install-action@v2)]
 treatment installAction[contexts: JavaScriptEngine, logger: Logger](
         var checksum: string = "true",
         var fallback: string = "cargo-binstall",
@@ -77,12 +77,12 @@ fi
                     "${{ inputs.checksum }}"
                     ),
                 |entry(
-                    "INPUT_TOOL",
-                    "${{ inputs.tool }}"
-                    ),
-                |entry(
                     "INPUT_FALLBACK",
                     "${{ inputs.fallback }}"
+                    ),
+                |entry(
+                    "INPUT_TOOL",
+                    "${{ inputs.tool }}"
                     )]
             )
         ),

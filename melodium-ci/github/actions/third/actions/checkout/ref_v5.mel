@@ -6,8 +6,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(actions/checkout@v5)]
 #[generated(true)]
+#[github_action(actions/checkout@v5)]
 treatment checkout[contexts: JavaScriptEngine, logger: Logger](
         var clean: string = "true",
         var fetch_depth: string = "1",

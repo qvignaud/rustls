@@ -142,16 +142,20 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
         env = |wrap<StringMap>(
         |map(
             [|entry(
+                    "INPUT_TOKEN",
+                    "${{ inputs.TOKEN }}"
+                    ),
+                |entry(
+                    "INPUT_FAILIFEMPTY",
+                    "${{ inputs.FAILIFEMPTY }}"
+                    ),
+                |entry(
                     "INPUT_OUTPUT",
                     "${{ inputs.OUTPUT }}"
                     ),
                 |entry(
-                    "INPUT_DEBUG",
-                    "${{ inputs.DEBUG }}"
-                    ),
-                |entry(
-                    "INPUT_TOKEN",
-                    "${{ inputs.TOKEN }}"
+                    "INPUT_FORMAT",
+                    "${{ inputs.FORMAT }}"
                     ),
                 |entry(
                     "INPUT_FAIL",
@@ -162,10 +166,6 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
                     "${{ inputs.JOBSUMMARY }}"
                     ),
                 |entry(
-                    "INPUT_FORMAT",
-                    "${{ inputs.FORMAT }}"
-                    ),
-                |entry(
                     "INPUT_CHECKBOX",
                     "${{ inputs.CHECKBOX }}"
                     ),
@@ -174,8 +174,8 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
                     "${{ inputs.ARGS }}"
                     ),
                 |entry(
-                    "INPUT_FAILIFEMPTY",
-                    "${{ inputs.FAILIFEMPTY }}"
+                    "INPUT_DEBUG",
+                    "${{ inputs.DEBUG }}"
                     )]
             )
         ),

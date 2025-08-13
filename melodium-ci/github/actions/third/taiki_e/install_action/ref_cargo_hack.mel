@@ -65,20 +65,20 @@ fi
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "ACTION_USER_AGENT",
-                    "${{ github.action_repository }} (${{ github.action_ref }})"
-                    ),
-                |entry(
-                    "INPUT_CHECKSUM",
-                    "${{ inputs.checksum }}"
+                    "INPUT_FALLBACK",
+                    "${{ inputs.fallback }}"
                     ),
                 |entry(
                     "DEFAULT_GITHUB_TOKEN",
                     "${{ github.token }}"
                     ),
                 |entry(
-                    "INPUT_FALLBACK",
-                    "${{ inputs.fallback }}"
+                    "ACTION_USER_AGENT",
+                    "${{ github.action_repository }} (${{ github.action_ref }})"
+                    ),
+                |entry(
+                    "INPUT_CHECKSUM",
+                    "${{ inputs.checksum }}"
                     ),
                 |entry(
                     "INPUT_TOOL",

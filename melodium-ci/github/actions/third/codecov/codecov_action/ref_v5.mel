@@ -8,8 +8,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(codecov/codecov-action@v5)]
+#[generated(true)]
 treatment codecovAction[contexts: JavaScriptEngine, logger: Logger](
         var base_sha: string = "",
         var binary: string = "",
@@ -96,12 +96,12 @@ fi
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "CC_OIDC_TOKEN",
-                    "${{ steps.oidc.outputs.result }}"
-                    ),
-                |entry(
                     "CC_OIDC_AUDIENCE",
                     "${{ inputs.url || 'https://codecov.io' }}"
+                    ),
+                |entry(
+                    "CC_OIDC_TOKEN",
+                    "${{ steps.oidc.outputs.result }}"
                     )]
             )
         ),
@@ -130,16 +130,16 @@ echo "CC_BRANCH=$CC_BRANCH" >> "$GITHUB_ENV"
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "GITHUB_EVENT_PULL_REQUEST_HEAD_REPO_FULL_NAME",
-                    "${{ github.event.pull_request.head.repo.full_name }}"
+                    "GITHUB_REPOSITORY",
+                    "${{ github.repository }}"
                     ),
                 |entry(
                     "GITHUB_EVENT_PULL_REQUEST_HEAD_LABEL",
                     "${{ github.event.pull_request.head.label }}"
                     ),
                 |entry(
-                    "GITHUB_REPOSITORY",
-                    "${{ github.repository }}"
+                    "GITHUB_EVENT_PULL_REQUEST_HEAD_REPO_FULL_NAME",
+                    "${{ github.event.pull_request.head.repo.full_name }}"
                     ),
                 |entry(
                     "CC_BRANCH",
@@ -167,16 +167,16 @@ echo "CC_PR=$CC_PR" >> "$GITHUB_ENV"
         env = |wrap<StringMap>(
         |map(
             [|entry(
+                    "CC_PR",
+                    "${{ inputs.override_pr }}"
+                    ),
+                |entry(
                     "GITHUB_EVENT_NAME",
                     "${{ github.event_name }}"
                     ),
                 |entry(
                     "GITHUB_EVENT_PULL_REQUEST_HEAD_SHA",
                     "${{ github.event.pull_request.head.sha }}"
-                    ),
-                |entry(
-                    "CC_PR",
-                    "${{ inputs.override_pr }}"
                     ),
                 |entry(
                     "CC_SHA",
@@ -408,12 +408,12 @@ echo "CC_FORK=$CC_FORK" >> "$GITHUB_ENV"
                     "${{ github.event.pull_request.head.repo.full_name }}"
                     ),
                 |entry(
-                    "GITHUB_REPOSITORY",
-                    "${{ github.repository }}"
-                    ),
-                |entry(
                     "GITHUB_EVENT_PULL_REQUEST_HEAD_LABEL",
                     "${{ github.event.pull_request.head.label }}"
+                    ),
+                |entry(
+                    "GITHUB_REPOSITORY",
+                    "${{ github.repository }}"
                     )]
             )
         ),
@@ -435,176 +435,176 @@ git config --global --add safe.directory "$GITHUB_WORKSPACE"
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "CC_OS",
-                    "${{ inputs.os }}"
-                    ),
-                |entry(
-                    "CC_SERVICE",
-                    "${{ inputs.git_service }}"
-                    ),
-                |entry(
-                    "CC_FILES",
-                    "${{ inputs.files }}"
-                    ),
-                |entry(
-                    "CC_BINARY",
-                    "${{ inputs.binary }}"
-                    ),
-                |entry(
-                    "CC_PLUGINS",
-                    "${{ inputs.plugins }}"
-                    ),
-                |entry(
-                    "CC_FAIL_ON_ERROR",
-                    "${{ inputs.fail_ci_if_error }}"
-                    ),
-                |entry(
-                    "CC_GCOV_ARGS",
-                    "${{ inputs.gcov_args }}"
-                    ),
-                |entry(
-                    "CC_GCOV_INCLUDE",
-                    "${{ inputs.gcov_include }}"
-                    ),
-                |entry(
-                    "CC_GCOV_IGNORE",
-                    "${{ inputs.gcov_ignore }}"
-                    ),
-                |entry(
-                    "CC_PARENT_SHA",
-                    "${{ inputs.commit_parent }}"
-                    ),
-                |entry(
-                    "CC_VERSION",
-                    "${{ inputs.version }}"
-                    ),
-                |entry(
-                    "CC_USE_PYPI",
-                    "${{ inputs.use_pypi }}"
-                    ),
-                |entry(
-                    "CC_SLUG",
-                    "${{ inputs.slug }}"
-                    ),
-                |entry(
-                    "CC_EXCLUDES",
-                    "${{ inputs.exclude }}"
-                    ),
-                |entry(
-                    "CC_DISABLE_TELEM",
-                    "${{ inputs.disable_telem }}"
-                    ),
-                |entry(
-                    "CC_LEGACY",
-                    "${{ inputs.use_legacy_upload_endpoint }}"
-                    ),
-                |entry(
-                    "CC_NETWORK_PREFIX",
-                    "${{ inputs.network_prefix }}"
-                    ),
-                |entry(
-                    "CC_ENTERPRISE_URL",
-                    "${{ inputs.url }}"
-                    ),
-                |entry(
-                    "CC_FORCE",
-                    "${{ inputs.force }}"
-                    ),
-                |entry(
-                    "CC_NAME",
-                    "${{ inputs.name }}"
-                    ),
-                |entry(
-                    "CC_CODE",
-                    "${{ inputs.report_code }}"
-                    ),
-                |entry(
-                    "CC_DISABLE_FILE_FIXES",
-                    "${{ inputs.disable_file_fixes }}"
-                    ),
-                |entry(
-                    "CC_NETWORK_ROOT_FOLDER",
-                    "${{ inputs.root_dir }}"
-                    ),
-                |entry(
-                    "CC_RUN_CMD",
-                    "${{ inputs.run_command }}"
-                    ),
-                |entry(
-                    "CC_RECURSE_SUBMODULES",
-                    "${{ inputs.recurse_submodules }}"
-                    ),
-                |entry(
-                    "CC_VERBOSE",
-                    "${{ inputs.verbose }}"
-                    ),
-                |entry(
-                    "CC_BASE_SHA",
-                    "${{ inputs.base_sha }}"
-                    ),
-                |entry(
-                    "CC_JOB_CODE",
-                    "${{ inputs.job_code }}"
+                    "CC_DISABLE_SEARCH",
+                    "${{ inputs.disable_search }}"
                     ),
                 |entry(
                     "CC_ENV",
                     "${{ inputs.env_vars }}"
                     ),
                 |entry(
-                    "CC_BUILD_URL",
-                    "${{ inputs.override_build_url }}"
+                    "CC_HANDLE_NO_REPORTS_FOUND",
+                    "${{ inputs.handle_no_reports_found }}"
                     ),
                 |entry(
-                    "CC_DISABLE_SEARCH",
-                    "${{ inputs.disable_search }}"
+                    "CC_REPORT_TYPE",
+                    "${{ inputs.report_type }}"
                     ),
                 |entry(
-                    "CC_BUILD",
-                    "${{ inputs.override_build }}"
+                    "CC_RECURSE_SUBMODULES",
+                    "${{ inputs.recurse_submodules }}"
                     ),
                 |entry(
-                    "CC_GCOV_EXECUTABLE",
-                    "${{ inputs.gcov_executable }}"
+                    "CC_RUN_CMD",
+                    "${{ inputs.run_command }}"
                     ),
                 |entry(
                     "CC_DRY_RUN",
                     "${{ inputs.dry_run }}"
                     ),
                 |entry(
-                    "CC_HANDLE_NO_REPORTS_FOUND",
-                    "${{ inputs.handle_no_reports_found }}"
-                    ),
-                |entry(
-                    "CC_GIT_SERVICE",
+                    "CC_SERVICE",
                     "${{ inputs.git_service }}"
                     ),
                 |entry(
-                    "CC_NETWORK_FILTER",
-                    "${{ inputs.network_filter }}"
+                    "CC_DISABLE_FILE_FIXES",
+                    "${{ inputs.disable_file_fixes }}"
                     ),
                 |entry(
-                    "CC_SWIFT_PROJECT",
-                    "${{ inputs.swift_project }}"
-                    ),
-                |entry(
-                    "CC_YML_PATH",
-                    "${{ inputs.codecov_yml_path }}"
-                    ),
-                |entry(
-                    "CC_DIR",
-                    "${{ inputs.directory }}"
+                    "CC_BUILD",
+                    "${{ inputs.override_build }}"
                     ),
                 |entry(
                     "CC_SKIP_VALIDATION",
                     "${{ inputs.skip_validation }}"
                     ),
                 |entry(
+                    "CC_SLUG",
+                    "${{ inputs.slug }}"
+                    ),
+                |entry(
+                    "CC_DIR",
+                    "${{ inputs.directory }}"
+                    ),
+                |entry(
+                    "CC_DISABLE_TELEM",
+                    "${{ inputs.disable_telem }}"
+                    ),
+                |entry(
+                    "CC_NETWORK_ROOT_FOLDER",
+                    "${{ inputs.root_dir }}"
+                    ),
+                |entry(
+                    "CC_NETWORK_PREFIX",
+                    "${{ inputs.network_prefix }}"
+                    ),
+                |entry(
+                    "CC_GIT_SERVICE",
+                    "${{ inputs.git_service }}"
+                    ),
+                |entry(
+                    "CC_VERSION",
+                    "${{ inputs.version }}"
+                    ),
+                |entry(
+                    "CC_CODE",
+                    "${{ inputs.report_code }}"
+                    ),
+                |entry(
+                    "CC_USE_PYPI",
+                    "${{ inputs.use_pypi }}"
+                    ),
+                |entry(
+                    "CC_ENTERPRISE_URL",
+                    "${{ inputs.url }}"
+                    ),
+                |entry(
+                    "CC_OS",
+                    "${{ inputs.os }}"
+                    ),
+                |entry(
+                    "CC_PARENT_SHA",
+                    "${{ inputs.commit_parent }}"
+                    ),
+                |entry(
+                    "CC_FAIL_ON_ERROR",
+                    "${{ inputs.fail_ci_if_error }}"
+                    ),
+                |entry(
+                    "CC_NAME",
+                    "${{ inputs.name }}"
+                    ),
+                |entry(
+                    "CC_GCOV_ARGS",
+                    "${{ inputs.gcov_args }}"
+                    ),
+                |entry(
+                    "CC_JOB_CODE",
+                    "${{ inputs.job_code }}"
+                    ),
+                |entry(
+                    "CC_BINARY",
+                    "${{ inputs.binary }}"
+                    ),
+                |entry(
+                    "CC_EXCLUDES",
+                    "${{ inputs.exclude }}"
+                    ),
+                |entry(
+                    "CC_SWIFT_PROJECT",
+                    "${{ inputs.swift_project }}"
+                    ),
+                |entry(
+                    "CC_FILES",
+                    "${{ inputs.files }}"
+                    ),
+                |entry(
+                    "CC_YML_PATH",
+                    "${{ inputs.codecov_yml_path }}"
+                    ),
+                |entry(
+                    "CC_LEGACY",
+                    "${{ inputs.use_legacy_upload_endpoint }}"
+                    ),
+                |entry(
+                    "CC_FORCE",
+                    "${{ inputs.force }}"
+                    ),
+                |entry(
+                    "CC_VERBOSE",
+                    "${{ inputs.verbose }}"
+                    ),
+                |entry(
+                    "CC_NETWORK_FILTER",
+                    "${{ inputs.network_filter }}"
+                    ),
+                |entry(
+                    "CC_BUILD_URL",
+                    "${{ inputs.override_build_url }}"
+                    ),
+                |entry(
                     "CC_FLAGS",
                     "${{ inputs.flags }}"
                     ),
                 |entry(
-                    "CC_REPORT_TYPE",
-                    "${{ inputs.report_type }}"
+                    "CC_GCOV_EXECUTABLE",
+                    "${{ inputs.gcov_executable }}"
+                    ),
+                |entry(
+                    "CC_GCOV_IGNORE",
+                    "${{ inputs.gcov_ignore }}"
+                    ),
+                |entry(
+                    "CC_PLUGINS",
+                    "${{ inputs.plugins }}"
+                    ),
+                |entry(
+                    "CC_GCOV_INCLUDE",
+                    "${{ inputs.gcov_include }}"
+                    ),
+                |entry(
+                    "CC_BASE_SHA",
+                    "${{ inputs.base_sha }}"
                     )]
             )
         ),
