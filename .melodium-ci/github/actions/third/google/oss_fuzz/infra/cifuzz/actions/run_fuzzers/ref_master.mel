@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master)]
 #[generated(true)]
+#[github_action(google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master)]
 treatment runFuzzers[contexts: JavaScriptEngine, logger: Logger](
         var args: Option<string> = _,
         var dry_run: string = "false",
@@ -37,7 +37,7 @@ treatment runFuzzers[contexts: JavaScriptEngine, logger: Logger](
         name = "build:runFuzzers"
     )
     entrypoint: runAction[contexts = docker_contexts, logger = logger](
-        commands = "docker run --volume \"$GITHUB_WORKSPACE:/github/workspace\" --mount type=bind,src=$GITHUB_OUTPUT,dst=/github/output.lst --env GITHUB_OUTPUT=/github/output.lst  --env 'REPORT_OOMS=${{ inputs.report-ooms}}' --env 'DRY_RUN=${{ inputs.dry-run}}' --env 'SANITIZER=${{ inputs.sanitizer }}' --env 'OSS_FUZZ_PROJECT_NAME=${{ inputs.oss-fuzz-project-name }}' --env 'GITHUB_TOKEN=${{ inputs.github-token }}' --env 'REPORT_UNREPRODUCIBLE_CRASHES=${{ inputs.report-unreproducible-crashes }}' --env 'CIFUZZ_DEBUG=True' --env 'FUZZ_SECONDS=${{ inputs.fuzz-seconds }}' --env 'MODE=${{ inputs.mode }}' --env 'OUTPUT_SARIF=${{ inputs.output-sarif }}' --env 'CFL_PLATFORM=github' --env 'REPORT_TIMEOUTS=${{ inputs.report-timeouts }}' --env 'LANGUAGE=${{ inputs.language }}' --env 'LOW_DISK_SPACE=True' --env 'MINIMIZE_CRASHES=${{ inputs.minimize-crashes }}' --env 'PARALLEL_FUZZING=${{ inputs.parallel-fuzzing }}' run_fuzzers:master ",
+        commands = "docker run --volume \"$GITHUB_WORKSPACE:/github/workspace\" --mount type=bind,src=$GITHUB_OUTPUT,dst=/github/output.lst --env GITHUB_OUTPUT=/github/output.lst  --env 'FUZZ_SECONDS=${{ inputs.fuzz-seconds }}' --env 'LANGUAGE=${{ inputs.language }}' --env 'CIFUZZ_DEBUG=True' --env 'OSS_FUZZ_PROJECT_NAME=${{ inputs.oss-fuzz-project-name }}' --env 'MINIMIZE_CRASHES=${{ inputs.minimize-crashes }}' --env 'REPORT_UNREPRODUCIBLE_CRASHES=${{ inputs.report-unreproducible-crashes }}' --env 'REPORT_TIMEOUTS=${{ inputs.report-timeouts }}' --env 'DRY_RUN=${{ inputs.dry-run}}' --env 'SANITIZER=${{ inputs.sanitizer }}' --env 'MODE=${{ inputs.mode }}' --env 'CFL_PLATFORM=github' --env 'LOW_DISK_SPACE=True' --env 'GITHUB_TOKEN=${{ inputs.github-token }}' --env 'OUTPUT_SARIF=${{ inputs.output-sarif }}' --env 'PARALLEL_FUZZING=${{ inputs.parallel-fuzzing }}' --env 'REPORT_OOMS=${{ inputs.report-ooms}}' run_fuzzers:master ",
         env = |wrap<StringMap>(
         |map(
             [|entry(

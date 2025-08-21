@@ -17,8 +17,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[job(deploy)]
 #[generated(true)]
+#[job(deploy)]
 treatment deploy[logger: Logger](
         var github_contexts: string
 )

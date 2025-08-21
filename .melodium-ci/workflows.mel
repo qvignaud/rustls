@@ -23,7 +23,9 @@ use root/github/daily_tests::exampleTests
 use root/github/daily_tests::featurePowerset
 use root/github/docs::deploy
 use root/github/docs::generate
+use cicd/logging::manageLogs
 use log/logger::Logger
+use std/engine/util::startup
 use std/flow/concentrate::Concentrator
 use std/flow/concentrate::concentrateBlock
 use std/flow/concentrate::concentrated
@@ -160,6 +162,24 @@ treatment buildUbuntuLatest[logger: Logger](
     finishTrigger.end -> Self.finished
 }
 
+treatment buildUbuntuLatestEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string
+)
+  model logger: Logger()
+{
+    buildUbuntuLatest[logger = logger](
+        github_contexts = github_contexts
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> buildUbuntuLatest.trigger
+    buildUbuntuLatest.finished -> manageLogs.stop
+}
+
 #[github_workflow(/.github/workflows/build.yml)]
 #[generated(true)]
 treatment buildmatrixOs[logger: Logger](
@@ -291,6 +311,24 @@ treatment buildmatrixOs[logger: Logger](
     finishTrigger.end -> Self.finished
 }
 
+treatment buildmatrixOsEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string
+)
+  model logger: Logger()
+{
+    buildmatrixOs[logger = logger](
+        github_contexts = github_contexts
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> buildmatrixOs.trigger
+    buildmatrixOs.finished -> manageLogs.stop
+}
+
 #[github_workflow(/.github/workflows/cifuzz.yml)]
 #[generated(true)]
 treatment cifuzz[logger: Logger](
@@ -312,6 +350,24 @@ treatment cifuzz[logger: Logger](
     Self.trigger -> fuzzing.trigger
     fuzzing.finished -> fuzzingFinished.data
     finishTrigger.end -> Self.finished
+}
+
+treatment cifuzzEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string
+)
+  model logger: Logger()
+{
+    cifuzz[logger = logger](
+        github_contexts = github_contexts
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> cifuzz.trigger
+    cifuzz.finished -> manageLogs.stop
 }
 
 #[generated(true)]
@@ -349,6 +405,24 @@ treatment dailyTestsUbuntuLatest[logger: Logger](
     finishTrigger.end -> Self.finished
 }
 
+treatment dailyTestsUbuntuLatestEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string
+)
+  model logger: Logger()
+{
+    dailyTestsUbuntuLatest[logger = logger](
+        github_contexts = github_contexts
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> dailyTestsUbuntuLatest.trigger
+    dailyTestsUbuntuLatest.finished -> manageLogs.stop
+}
+
 #[github_workflow(/.github/workflows/daily-tests.yml)]
 #[generated(true)]
 treatment dailyTestsmatrixOs[logger: Logger](
@@ -384,8 +458,26 @@ treatment dailyTestsmatrixOs[logger: Logger](
     finishTrigger.end -> Self.finished
 }
 
-#[generated(true)]
+treatment dailyTestsmatrixOsEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string
+)
+  model logger: Logger()
+{
+    dailyTestsmatrixOs[logger = logger](
+        github_contexts = github_contexts
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> dailyTestsmatrixOs.trigger
+    dailyTestsmatrixOs.finished -> manageLogs.stop
+}
+
 #[github_workflow(/.github/workflows/docs.yml)]
+#[generated(true)]
 treatment docs[logger: Logger](
         var github_contexts: string
 )
@@ -411,5 +503,23 @@ treatment docs[logger: Logger](
     Self.trigger -> deploy.trigger
     deploy.finished -> deployFinished.data
     finishTrigger.end -> Self.finished
+}
+
+treatment docsEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string
+)
+  model logger: Logger()
+{
+    docs[logger = logger](
+        github_contexts = github_contexts
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> docs.trigger
+    docs.finished -> manageLogs.stop
 }
 

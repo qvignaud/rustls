@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(lycheeverse/lychee-action@v2)]
 #[generated(true)]
+#[github_action(lycheeverse/lychee-action@v2)]
 treatment lycheeAction[contexts: JavaScriptEngine, logger: Logger](
         var args: string = "--verbose --no-progress './**/*.md' './**/*.html' './**/*.rst'",
         var checkbox: string = "true",
@@ -142,40 +142,40 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "INPUT_FAILIFEMPTY",
-                    "${{ inputs.FAILIFEMPTY }}"
+                    "INPUT_FORMAT",
+                    "${{ inputs.FORMAT }}"
                     ),
                 |entry(
-                    "INPUT_DEBUG",
-                    "${{ inputs.DEBUG }}"
-                    ),
-                |entry(
-                    "INPUT_OUTPUT",
-                    "${{ inputs.OUTPUT }}"
-                    ),
-                |entry(
-                    "INPUT_CHECKBOX",
-                    "${{ inputs.CHECKBOX }}"
+                    "INPUT_JOBSUMMARY",
+                    "${{ inputs.JOBSUMMARY }}"
                     ),
                 |entry(
                     "INPUT_ARGS",
                     "${{ inputs.ARGS }}"
                     ),
                 |entry(
-                    "INPUT_FORMAT",
-                    "${{ inputs.FORMAT }}"
+                    "INPUT_FAILIFEMPTY",
+                    "${{ inputs.FAILIFEMPTY }}"
+                    ),
+                |entry(
+                    "INPUT_OUTPUT",
+                    "${{ inputs.OUTPUT }}"
                     ),
                 |entry(
                     "INPUT_FAIL",
                     "${{ inputs.FAIL }}"
                     ),
                 |entry(
+                    "INPUT_DEBUG",
+                    "${{ inputs.DEBUG }}"
+                    ),
+                |entry(
                     "INPUT_TOKEN",
                     "${{ inputs.TOKEN }}"
                     ),
                 |entry(
-                    "INPUT_JOBSUMMARY",
-                    "${{ inputs.JOBSUMMARY }}"
+                    "INPUT_CHECKBOX",
+                    "${{ inputs.CHECKBOX }}"
                     )]
             )
         ),

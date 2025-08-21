@@ -24,8 +24,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[job(audit)]
 #[generated(true)]
+#[job(audit)]
 treatment audit[logger: Logger](
         var github_contexts: string
 )
@@ -58,8 +58,8 @@ treatment audit[logger: Logger](
     jobResult.finished -> step0.post_trigger
 }
 
-#[generated(true)]
 #[job(benchmarks)]
+#[generated(true)]
 treatment benchmarks[logger: Logger](
         var github_contexts: string
 )
@@ -126,8 +126,8 @@ treatment benchmarks[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(bogo)]
+#[generated(true)]
 treatment bogo[logger: Logger](
         var github_contexts: string
 )
@@ -463,8 +463,8 @@ treatment clippy[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(clippyNightly)]
+#[generated(true)]
 treatment clippyNightly[logger: Logger](
         var github_contexts: string
 )
@@ -513,8 +513,8 @@ treatment clippyNightly[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(coverage)]
+#[generated(true)]
 treatment coverage[logger: Logger](
         var github_contexts: string
 )
@@ -567,8 +567,8 @@ treatment coverage[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(cross)]
+#[generated(true)]
 treatment cross[logger: Logger](
         var github_contexts: string
 )
@@ -625,8 +625,8 @@ treatment cross[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(docs)]
 #[generated(true)]
+#[job(docs)]
 treatment docs[logger: Logger](
         var github_contexts: string
 )
@@ -793,8 +793,8 @@ treatment features[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(format)]
+#[generated(true)]
 treatment format[logger: Logger](
         var github_contexts: string
 )
@@ -961,8 +961,8 @@ done
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(minver)]
 #[generated(true)]
+#[job(minver)]
 treatment minver[logger: Logger](
         var github_contexts: string
 )
@@ -1008,8 +1008,8 @@ treatment minver[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(msrv)]
+#[generated(true)]
 treatment msrv[logger: Logger](
         var github_contexts: string
 )
@@ -1051,8 +1051,8 @@ treatment msrv[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(opensslTests)]
+#[generated(true)]
 treatment opensslTests[logger: Logger](
         var github_contexts: string
 )
@@ -1172,8 +1172,8 @@ treatment semver[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(taplo)]
 #[generated(true)]
+#[job(taplo)]
 treatment taplo[logger: Logger](
         var github_contexts: string
 )

@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(ilammy/setup-nasm@v1)]
+#[generated(true)]
 treatment setupNasm[contexts: JavaScriptEngine, logger: Logger](
         var from_source: string = "",
         var platform: string = "",

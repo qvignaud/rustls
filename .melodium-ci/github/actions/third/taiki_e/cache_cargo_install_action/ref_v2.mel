@@ -66,20 +66,28 @@ fi
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "INPUT_FEATURES",
-                    "${{ inputs.features }}"
+                    "INPUT_LOCKED",
+                    "${{ inputs.locked }}"
                     ),
                 |entry(
-                    "INPUT_TOOL",
-                    "${{ inputs.tool }}"
+                    "INPUT_NO_DEFAULT_FEATURES",
+                    "${{ inputs.no-default-features }}"
+                    ),
+                |entry(
+                    "INPUT_ALL_FEATURES",
+                    "${{ inputs.all-features }}"
+                    ),
+                |entry(
+                    "INPUT_FEATURES",
+                    "${{ inputs.features }}"
                     ),
                 |entry(
                     "INPUT_REV",
                     "${{ inputs.rev }}"
                     ),
                 |entry(
-                    "ACTION_USER_AGENT",
-                    "${{ github.action_repository }} (${{ github.action_ref }})"
+                    "INPUT_TOOL",
+                    "${{ inputs.tool }}"
                     ),
                 |entry(
                     "INPUT_TAG",
@@ -90,16 +98,8 @@ fi
                     "${{ inputs.git }}"
                     ),
                 |entry(
-                    "INPUT_LOCKED",
-                    "${{ inputs.locked }}"
-                    ),
-                |entry(
-                    "INPUT_ALL_FEATURES",
-                    "${{ inputs.all-features }}"
-                    ),
-                |entry(
-                    "INPUT_NO_DEFAULT_FEATURES",
-                    "${{ inputs.no-default-features }}"
+                    "ACTION_USER_AGENT",
+                    "${{ github.action_repository }} (${{ github.action_ref }})"
                     )]
             )
         ),

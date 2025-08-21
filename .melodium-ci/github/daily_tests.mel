@@ -204,8 +204,8 @@ treatment exampleTests[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(featurePowerset)]
 #[generated(true)]
+#[job(featurePowerset)]
 treatment featurePowerset[logger: Logger](
         var github_contexts: string
 )
