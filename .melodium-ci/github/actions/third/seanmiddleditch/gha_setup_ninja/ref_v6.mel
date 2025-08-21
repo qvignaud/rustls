@@ -1,0 +1,75 @@
+use cicd/services/github::replicateContextsWithInputs
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[github_action(seanmiddleditch/gha-setup-ninja@v6)]
+#[generated(true)]
+treatment ghaSetupNinja[contexts: JavaScriptEngine, logger: Logger](
+        var destination: string = "ninja-build",
+        var http_proxy: string = "",
+        var platform: string = "",
+        var version: string = "1.12.1"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  model node_contexts: JavaScriptEngine()
+{
+    mainAction: runAction[contexts = node_contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/seanmiddleditch/gha_setup_ninja/ref_v6/dist/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_VERSION",
+                    version
+                    ),
+                |entry(
+                    "INPUT_PLATFORM",
+                    platform
+                    ),
+                |entry(
+                    "INPUT_DESTINATION",
+                    destination
+                    ),
+                |entry(
+                    "INPUT_HTTP_PROXY",
+                    http_proxy
+                    )]
+            )
+        ),
+        name = "ghaSetupNinja"
+    )
+    replicateContextsWithInputs[action_contexts = node_contexts, main_contexts = contexts](
+        inputs = |map(
+        [|entry(
+                "version",
+                version
+                ),
+            |entry(
+                "platform",
+                platform
+                ),
+            |entry(
+                "destination",
+                destination
+                ),
+            |entry(
+                "http_proxy",
+                http_proxy
+                )]
+        )
+    )
+
+    Self.trigger -> replicateContextsWithInputs.trigger
+    replicateContextsWithInputs.ready -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

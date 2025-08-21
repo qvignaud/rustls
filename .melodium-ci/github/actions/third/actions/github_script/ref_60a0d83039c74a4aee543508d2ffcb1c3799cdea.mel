@@ -1,0 +1,120 @@
+use cicd/services/github::replicateContextsWithInputs
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea)]
+treatment githubScript[contexts: JavaScriptEngine, logger: Logger](
+        var base_url: string = "",
+        var debug: string = "${{ runner.debug == '1' }}",
+        var github_token: string = "${{ github.token }}",
+        var previews: string = "",
+        var result_encoding: string = "json",
+        var retries: string = "0",
+        var retry_exempt_status_codes: string = "400,401,403,404,422",
+        var script: string = "",
+        var user_agent: string = "actions/github-script"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  model node_contexts: JavaScriptEngine()
+{
+    mainAction: runAction[contexts = node_contexts, logger = logger](
+        commands = "node20 ci/github/actions/third/actions/github_script/ref_60a0d83039c74a4aee543508d2ffcb1c3799cdea/dist/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_SCRIPT",
+                    script
+                    ),
+                |entry(
+                    "INPUT_GITHUB-TOKEN",
+                    github_token
+                    ),
+                |entry(
+                    "INPUT_DEBUG",
+                    debug
+                    ),
+                |entry(
+                    "INPUT_USER-AGENT",
+                    user_agent
+                    ),
+                |entry(
+                    "INPUT_PREVIEWS",
+                    previews
+                    ),
+                |entry(
+                    "INPUT_RESULT-ENCODING",
+                    result_encoding
+                    ),
+                |entry(
+                    "INPUT_RETRIES",
+                    retries
+                    ),
+                |entry(
+                    "INPUT_RETRY-EXEMPT-STATUS-CODES",
+                    retry_exempt_status_codes
+                    ),
+                |entry(
+                    "INPUT_BASE-URL",
+                    base_url
+                    )]
+            )
+        ),
+        name = "githubScript"
+    )
+    replicateContextsWithInputs[action_contexts = node_contexts, main_contexts = contexts](
+        inputs = |map(
+        [|entry(
+                "script",
+                script
+                ),
+            |entry(
+                "github-token",
+                github_token
+                ),
+            |entry(
+                "debug",
+                debug
+                ),
+            |entry(
+                "user-agent",
+                user_agent
+                ),
+            |entry(
+                "previews",
+                previews
+                ),
+            |entry(
+                "result-encoding",
+                result_encoding
+                ),
+            |entry(
+                "retries",
+                retries
+                ),
+            |entry(
+                "retry-exempt-status-codes",
+                retry_exempt_status_codes
+                ),
+            |entry(
+                "base-url",
+                base_url
+                )]
+        )
+    )
+
+    Self.trigger -> replicateContextsWithInputs.trigger
+    replicateContextsWithInputs.ready -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+
