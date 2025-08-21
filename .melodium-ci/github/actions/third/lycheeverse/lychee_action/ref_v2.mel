@@ -142,40 +142,40 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "INPUT_FORMAT",
-                    "${{ inputs.FORMAT }}"
-                    ),
-                |entry(
-                    "INPUT_JOBSUMMARY",
-                    "${{ inputs.JOBSUMMARY }}"
-                    ),
-                |entry(
-                    "INPUT_ARGS",
-                    "${{ inputs.ARGS }}"
-                    ),
-                |entry(
-                    "INPUT_FAILIFEMPTY",
-                    "${{ inputs.FAILIFEMPTY }}"
-                    ),
-                |entry(
-                    "INPUT_OUTPUT",
-                    "${{ inputs.OUTPUT }}"
-                    ),
-                |entry(
                     "INPUT_FAIL",
                     "${{ inputs.FAIL }}"
                     ),
                 |entry(
-                    "INPUT_DEBUG",
-                    "${{ inputs.DEBUG }}"
+                    "INPUT_FORMAT",
+                    "${{ inputs.FORMAT }}"
+                    ),
+                |entry(
+                    "INPUT_CHECKBOX",
+                    "${{ inputs.CHECKBOX }}"
                     ),
                 |entry(
                     "INPUT_TOKEN",
                     "${{ inputs.TOKEN }}"
                     ),
                 |entry(
-                    "INPUT_CHECKBOX",
-                    "${{ inputs.CHECKBOX }}"
+                    "INPUT_JOBSUMMARY",
+                    "${{ inputs.JOBSUMMARY }}"
+                    ),
+                |entry(
+                    "INPUT_OUTPUT",
+                    "${{ inputs.OUTPUT }}"
+                    ),
+                |entry(
+                    "INPUT_ARGS",
+                    "${{ inputs.ARGS }}"
+                    ),
+                |entry(
+                    "INPUT_DEBUG",
+                    "${{ inputs.DEBUG }}"
+                    ),
+                |entry(
+                    "INPUT_FAILIFEMPTY",
+                    "${{ inputs.FAILIFEMPTY }}"
                     )]
             )
         ),

@@ -19,7 +19,7 @@ concurrency:
   group: "${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}"
   cancel-in-progress: true
 jobs:
-  buildUbuntuLatest:
+  buildUbuntuLatestEntrypoint:
     uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@temp_ubuntu
     with:
       version: 0.9.0-pre.5
@@ -28,7 +28,7 @@ jobs:
       artifact-path: logs/
     secrets:
       token: "${{ secrets.GITHUB_TOKEN }}"
-  buildmatrixOs:
+  buildmatrixOsEntrypoint:
     uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@temp_ubuntu
     with:
       version: 0.9.0-pre.5

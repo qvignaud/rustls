@@ -213,8 +213,8 @@ treatment bogo[logger: Logger](
     jobResult.finished -> installGolangToolchain.post_trigger
 }
 
-#[job(build)]
 #[generated(true)]
+#[job(build)]
 treatment build[logger: Logger](
         var github_contexts: string
 )
@@ -364,8 +364,8 @@ treatment build[logger: Logger](
     jobResult.finished -> installGolangForAwsLcFipsSysOnMacos.post_trigger
 }
 
-#[generated(true)]
 #[job(checkExternalTypes)]
+#[generated(true)]
 treatment checkExternalTypes[logger: Logger](
         var github_contexts: string
 )
@@ -513,8 +513,8 @@ treatment clippyNightly[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(coverage)]
 #[generated(true)]
+#[job(coverage)]
 treatment coverage[logger: Logger](
         var github_contexts: string
 )
@@ -625,8 +625,8 @@ treatment cross[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(docs)]
+#[generated(true)]
 treatment docs[logger: Logger](
         var github_contexts: string
 )
@@ -684,8 +684,8 @@ git diff --exit-code
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(features)]
+#[generated(true)]
 treatment features[logger: Logger](
         var github_contexts: string
 )
@@ -793,8 +793,8 @@ treatment features[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(format)]
 #[generated(true)]
+#[job(format)]
 treatment format[logger: Logger](
         var github_contexts: string
 )
@@ -849,8 +849,8 @@ treatment format[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(formatUnstable)]
 #[generated(true)]
+#[job(formatUnstable)]
 treatment formatUnstable[logger: Logger](
         var github_contexts: string
 )
@@ -911,8 +911,8 @@ treatment formatUnstable[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(fuzz)]
+#[generated(true)]
 treatment fuzz[logger: Logger](
         var github_contexts: string
 )
@@ -961,8 +961,8 @@ done
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(minver)]
+#[generated(true)]
 treatment minver[logger: Logger](
         var github_contexts: string
 )
@@ -1008,8 +1008,8 @@ treatment minver[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(msrv)]
 #[generated(true)]
+#[job(msrv)]
 treatment msrv[logger: Logger](
         var github_contexts: string
 )
@@ -1136,8 +1136,8 @@ echo "LD_LIBRARY_PATH=$path/lib" >> $GITHUB_ENV
     jobResult.finished -> cacheOpenssl.post_trigger
 }
 
-#[job(semver)]
 #[generated(true)]
+#[job(semver)]
 treatment semver[logger: Logger](
         var github_contexts: string
 )
@@ -1172,8 +1172,8 @@ treatment semver[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[generated(true)]
 #[job(taplo)]
+#[generated(true)]
 treatment taplo[logger: Logger](
         var github_contexts: string
 )

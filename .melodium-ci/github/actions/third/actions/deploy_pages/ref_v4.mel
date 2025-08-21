@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(actions/deploy-pages@v4)]
+#[generated(true)]
 treatment deployPages[contexts: JavaScriptEngine, logger: Logger](
         var artifact_name: string = "github-pages",
         var error_count: string = "10",
@@ -24,7 +24,7 @@ treatment deployPages[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/actions/deploy_pages/ref_v4/dist/index.js",
+        commands = "node ci/github/actions/third/actions/deploy_pages/ref_v4/dist/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(

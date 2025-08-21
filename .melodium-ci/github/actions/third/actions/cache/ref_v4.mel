@@ -28,7 +28,7 @@ treatment cache[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/actions/cache/ref_v4/dist/restore/index.js",
+        commands = "node ci/github/actions/third/actions/cache/ref_v4/dist/restore/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(
@@ -68,7 +68,7 @@ treatment cache[contexts: JavaScriptEngine, logger: Logger](
         name = "cache"
     )
     postAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/actions/cache/ref_v4/dist/save/index.js",
+        commands = "node ci/github/actions/third/actions/cache/ref_v4/dist/save/index.js",
         if = "success()",
         name = "post:cache"
     )

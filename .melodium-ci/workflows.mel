@@ -31,8 +31,8 @@ use std/flow/concentrate::concentrateBlock
 use std/flow/concentrate::concentrated
 use std/flow::trigger
 
-#[github_workflow(/.github/workflows/build.yml)]
 #[generated(true)]
+#[github_workflow(/.github/workflows/build.yml)]
 treatment buildUbuntuLatest[logger: Logger](
         var github_contexts: string
 )
@@ -180,8 +180,8 @@ treatment buildUbuntuLatestEntrypoint(
     buildUbuntuLatest.finished -> manageLogs.stop
 }
 
-#[github_workflow(/.github/workflows/build.yml)]
 #[generated(true)]
+#[github_workflow(/.github/workflows/build.yml)]
 treatment buildmatrixOs[logger: Logger](
         var github_contexts: string
 )
@@ -329,8 +329,8 @@ treatment buildmatrixOsEntrypoint(
     buildmatrixOs.finished -> manageLogs.stop
 }
 
-#[github_workflow(/.github/workflows/cifuzz.yml)]
 #[generated(true)]
+#[github_workflow(/.github/workflows/cifuzz.yml)]
 treatment cifuzz[logger: Logger](
         var github_contexts: string
 )
@@ -370,8 +370,8 @@ treatment cifuzzEntrypoint(
     cifuzz.finished -> manageLogs.stop
 }
 
-#[generated(true)]
 #[github_workflow(/.github/workflows/daily-tests.yml)]
+#[generated(true)]
 treatment dailyTestsUbuntuLatest[logger: Logger](
         var github_contexts: string
 )
@@ -423,8 +423,8 @@ treatment dailyTestsUbuntuLatestEntrypoint(
     dailyTestsUbuntuLatest.finished -> manageLogs.stop
 }
 
-#[github_workflow(/.github/workflows/daily-tests.yml)]
 #[generated(true)]
+#[github_workflow(/.github/workflows/daily-tests.yml)]
 treatment dailyTestsmatrixOs[logger: Logger](
         var github_contexts: string
 )

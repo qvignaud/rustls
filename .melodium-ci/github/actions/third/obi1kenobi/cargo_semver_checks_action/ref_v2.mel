@@ -33,7 +33,7 @@ treatment cargoSemverChecksAction[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/obi1kenobi/cargo_semver_checks_action/ref_v2/dist/index.js",
+        commands = "node ci/github/actions/third/obi1kenobi/cargo_semver_checks_action/ref_v2/dist/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(

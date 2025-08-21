@@ -27,7 +27,7 @@ treatment githubScript[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/actions/github_script/ref_60a0d83039c74a4aee543508d2ffcb1c3799cdea/dist/index.js",
+        commands = "node ci/github/actions/third/actions/github_script/ref_60a0d83039c74a4aee543508d2ffcb1c3799cdea/dist/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(

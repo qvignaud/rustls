@@ -78,8 +78,8 @@ treatment connectTests[logger: Logger](
     jobResult.finished -> checkoutSources.post_trigger
 }
 
-#[job(exampleTests)]
 #[generated(true)]
+#[job(exampleTests)]
 treatment exampleTests[logger: Logger](
         var github_contexts: string
 )

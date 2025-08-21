@@ -21,7 +21,7 @@ treatment setupNasm[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/ilammy/setup_nasm/ref_v1/index.js",
+        commands = "node ci/github/actions/third/ilammy/setup_nasm/ref_v1/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(

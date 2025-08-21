@@ -25,7 +25,7 @@ treatment uploadArtifact[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node20 ci/github/actions/third/actions/upload_artifact/ref_v4/dist/upload/index.js",
+        commands = "node ci/github/actions/third/actions/upload_artifact/ref_v4/dist/upload/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(
