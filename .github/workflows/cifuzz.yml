@@ -8,7 +8,6 @@ concurrency:
   cancel-in-progress: true
 jobs:
   cifuzzEntrypoint:
-    runs-on: ubuntu-latest
     uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@temp_ubuntu
     with:
       version: 0.9.0-pre.5

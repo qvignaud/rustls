@@ -12,7 +12,6 @@ permissions:
     - cron: 0 18 * * *
 jobs:
   docsEntrypoint:
-    runs-on: ubuntu-latest
     uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@temp_ubuntu
     with:
       version: 0.9.0-pre.5

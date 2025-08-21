@@ -20,7 +20,6 @@ concurrency:
   cancel-in-progress: true
 jobs:
   buildUbuntuLatestEntrypoint:
-    runs-on: ubuntu-latest
     uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@temp_ubuntu
     with:
       version: 0.9.0-pre.5
@@ -30,7 +29,6 @@ jobs:
     secrets:
       token: "${{ secrets.GITHUB_TOKEN }}"
   buildmatrixOsEntrypoint:
-    runs-on: "${{ matrix.os }}"
     uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@temp_ubuntu
     with:
       version: 0.9.0-pre.5
