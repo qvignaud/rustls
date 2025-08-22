@@ -24,7 +24,7 @@ treatment deployPages[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node ci/github/actions/third/actions/deploy_pages/ref_v4/dist/index.js",
+        commands = "node .melodium-ci/github/actions/third/actions/deploy_pages/ref_v4/dist/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(

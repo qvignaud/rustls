@@ -17,7 +17,7 @@ treatment lycheeAction[contexts: JavaScriptEngine, logger: Logger](
         var fail_if_empty: string = "true",
         var format: string = "markdown",
         var job_summary: string = "true",
-        var lychee_version: string = "v0.19.1",
+        var lychee_version: string = "v0.20.0",
         var output: string = "lychee/out.md",
         var token: string = "${{ github.token }}",
         var working_directory: string = "."
@@ -142,20 +142,8 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
         env = |wrap<StringMap>(
         |map(
             [|entry(
-                    "INPUT_FAIL",
-                    "${{ inputs.FAIL }}"
-                    ),
-                |entry(
-                    "INPUT_FORMAT",
-                    "${{ inputs.FORMAT }}"
-                    ),
-                |entry(
-                    "INPUT_CHECKBOX",
-                    "${{ inputs.CHECKBOX }}"
-                    ),
-                |entry(
-                    "INPUT_TOKEN",
-                    "${{ inputs.TOKEN }}"
+                    "INPUT_FAILIFEMPTY",
+                    "${{ inputs.FAILIFEMPTY }}"
                     ),
                 |entry(
                     "INPUT_JOBSUMMARY",
@@ -166,16 +154,28 @@ echo "temp_dir=${TEMP_DIR}" >> $GITHUB_OUTPUT
                     "${{ inputs.OUTPUT }}"
                     ),
                 |entry(
-                    "INPUT_ARGS",
-                    "${{ inputs.ARGS }}"
-                    ),
-                |entry(
                     "INPUT_DEBUG",
                     "${{ inputs.DEBUG }}"
                     ),
                 |entry(
-                    "INPUT_FAILIFEMPTY",
-                    "${{ inputs.FAILIFEMPTY }}"
+                    "INPUT_ARGS",
+                    "${{ inputs.ARGS }}"
+                    ),
+                |entry(
+                    "INPUT_FAIL",
+                    "${{ inputs.FAIL }}"
+                    ),
+                |entry(
+                    "INPUT_CHECKBOX",
+                    "${{ inputs.CHECKBOX }}"
+                    ),
+                |entry(
+                    "INPUT_TOKEN",
+                    "${{ inputs.TOKEN }}"
+                    ),
+                |entry(
+                    "INPUT_FORMAT",
+                    "${{ inputs.FORMAT }}"
                     )]
             )
         ),

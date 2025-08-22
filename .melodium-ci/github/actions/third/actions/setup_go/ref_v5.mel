@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[github_action(actions/setup-go@v5)]
 #[generated(true)]
+#[github_action(actions/setup-go@v5)]
 treatment setupGo[contexts: JavaScriptEngine, logger: Logger](
         var architecture: string = "",
         var cache: string = "true",
@@ -27,7 +27,7 @@ treatment setupGo[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node ci/github/actions/third/actions/setup_go/ref_v5/dist/setup/index.js",
+        commands = "node .melodium-ci/github/actions/third/actions/setup_go/ref_v5/dist/setup/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(
@@ -63,7 +63,7 @@ treatment setupGo[contexts: JavaScriptEngine, logger: Logger](
         name = "setupGo"
     )
     postAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node ci/github/actions/third/actions/setup_go/ref_v5/dist/cache-save/index.js",
+        commands = "node .melodium-ci/github/actions/third/actions/setup_go/ref_v5/dist/cache-save/index.js",
         if = "success()",
         name = "post:setupGo"
     )

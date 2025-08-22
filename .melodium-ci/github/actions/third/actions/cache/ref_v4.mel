@@ -7,8 +7,8 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/ops/option::|wrap
 
-#[generated(true)]
 #[github_action(actions/cache@v4)]
+#[generated(true)]
 treatment cache[contexts: JavaScriptEngine, logger: Logger](
         var enable_cross_os_archive: string = "false",
         var fail_on_cache_miss: string = "false",
@@ -28,7 +28,7 @@ treatment cache[contexts: JavaScriptEngine, logger: Logger](
   model node_contexts: JavaScriptEngine()
 {
     mainAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node ci/github/actions/third/actions/cache/ref_v4/dist/restore/index.js",
+        commands = "node .melodium-ci/github/actions/third/actions/cache/ref_v4/dist/restore/index.js",
         env = |wrap<StringMap>(
         |map(
             [|entry(
@@ -68,7 +68,7 @@ treatment cache[contexts: JavaScriptEngine, logger: Logger](
         name = "cache"
     )
     postAction: runAction[contexts = node_contexts, logger = logger](
-        commands = "node ci/github/actions/third/actions/cache/ref_v4/dist/save/index.js",
+        commands = "node .melodium-ci/github/actions/third/actions/cache/ref_v4/dist/save/index.js",
         if = "success()",
         name = "post:cache"
     )
