@@ -9,7 +9,7 @@ use json::Json
 use log/logger::Logger
 use std/data/string_map::|map
 
-use cicd/services/github::postGithubStateContexts
+use cicd/services/github::postGithubStateContext
 use cicd/services/github::|pending
 use cicd/services/github::|success
 use cicd/services/github::|failure
@@ -24,19 +24,19 @@ treatment fuzzing[logger: Logger](
   output result: Block<Json>
   model contexts: JavaScriptEngine()
 {
-    notifPending: postGithubStateContexts[contexts = contexts, logger = logger](
+    notifPending: postGithubStateContext[contexts = contexts, logger = logger](
         state = |pending(),
         name = "fuzzing",
         description = "Fuzzing treatment",
         log_response = true
     )
-    notifSuccess: postGithubStateContexts[contexts = contexts, logger = logger](
+    notifSuccess: postGithubStateContext[contexts = contexts, logger = logger](
         state = |pending(),
         name = "fuzzing",
         description = "Fuzzing treatment",
         log_response = true
     )
-    notifFailure: postGithubStateContexts[contexts = contexts, logger = logger](
+    notifFailure: postGithubStateContext[contexts = contexts, logger = logger](
         state = |pending(),
         name = "fuzzing",
         description = "Fuzzing treatment",
