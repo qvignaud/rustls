@@ -9,6 +9,11 @@ use json::Json
 use log/logger::Logger
 use std/data/string_map::|map
 
+use cicd/services/github::postGithubStateContexts
+use cicd/services/github::|pending
+use cicd/services/github::|success
+use cicd/services/github::|failure
+
 #[generated(true)]
 #[job(fuzzing)]
 treatment fuzzing[logger: Logger](
@@ -19,6 +24,25 @@ treatment fuzzing[logger: Logger](
   output result: Block<Json>
   model contexts: JavaScriptEngine()
 {
+    notifPending: postGithubStateContexts[contexts = contexts, logger = logger](
+        state = |pending(),
+        name = "fuzzing",
+        description = "Fuzzing treatment",
+        log_response = true
+    )
+    notifSuccess: postGithubStateContexts[contexts = contexts, logger = logger](
+        state = |pending(),
+        name = "fuzzing",
+        description = "Fuzzing treatment",
+        log_response = true
+    )
+    notifFailure: postGithubStateContexts[contexts = contexts, logger = logger](
+        state = |pending(),
+        name = "fuzzing",
+        description = "Fuzzing treatment",
+        log_response = true
+    )
+    
     build: buildFuzzers[contexts = contexts, logger = logger](
         dry_run = "false",
         language = "rust",
@@ -54,5 +78,9 @@ treatment fuzzing[logger: Logger](
     uploadCrash.continue -> jobResult.trigger_release
     jobResult.result -> Self.result
     jobResult.finished -> Self.finished
+    
+    prepareContexts.ready -> notifPending.trigger
+    jobResult.success -> notifSuccess.trigger
+    jobResult.failure -> notifFailure.trigger
 }
 
